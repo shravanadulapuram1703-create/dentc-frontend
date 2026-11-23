@@ -5,6 +5,7 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { PlanReportInsurance } from './planReportInsurance';
 import type { PlanReportItem } from './planReportItem';
 import type { PlanReportPatient } from './planReportPatient';
 
@@ -23,4 +24,9 @@ export interface TreatmentPlanReport {
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   total_patient_estimate: string;
   items: PlanReportItem[];
+  primary_insurance?: PlanReportInsurance | null;
+  annual_max_remaining_after?: string | null;
+  deductible_remaining_after?: string | null;
+  benefit_year_start?: string | null;
+  max_remaining_source?: string | null;
 }

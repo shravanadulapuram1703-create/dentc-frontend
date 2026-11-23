@@ -1,0 +1,580 @@
+{
+  "category": "appointment_reports",
+  "source_document": "research/legacy_report_outputs_appointment_recall_referral.md",
+  "reports": [
+    {
+      "report_id": "appointment_reports.r01",
+      "legacy_name": "Appointment List",
+      "added_controls": [
+        {
+          "section": "PRINT FORMAT",
+          "label": "",
+          "type": "radio_group",
+          "options": [
+            "PDF",
+            "Excel"
+          ],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "",
+          "confidence": "confirmed",
+          "evidence_quote": "The area clipped at the top holds `PRINT FORMAT` (`PDF` / `Excel`) and the header of the six radios is `REPORT FORMAT TO PRINT`.",
+          "notes": "Hidden ABOVE the captured area: our screenshot of Appointment List was taken scrolled to the bottom of the criteria panel, so the top of the panel is cut off. Vendor screenshots of this criteria screen show the section. The default is not stated for this report (the other eight reports of the category show PDF selected in our captures). Whether it sits above or beside REPORT FORMAT TO PRINT is not stated. The document also states, as a cross-cutting fact backed by vendor criteria screenshots, that every report of the Appointment, Recall and Referral categories has PRINT FORMAT (PDF / Excel)."
+        }
+      ],
+      "added_options": [],
+      "dynamic_rules": [
+        {
+          "when": "REPORT FORMAT TO PRINT = Confirmation Call List (the state of our capture)",
+          "effect": "Of the filter criteria only the office (OFFICE/GROUP), PROVIDER, the DATE RANGE dates and Include Patient Balance are enabled. Everything else is greyed - the EXCLUDE PATIENT TYPE, EXCLUDE RESP. PARTY TYPE, CANCELLATION REASON and OPERATORY pickers, the Length dropdown, the Status checkboxes Missed / Cancelled, Include Off Call List and all four SORT BY radios (the greyed set recorded in our capture).",
+          "controls": [
+            "appointment_reports.r01.s01.c01",
+            "appointment_reports.r01.s02.c01",
+            "appointment_reports.r01.s02.c02",
+            "appointment_reports.r01.s03.c01",
+            "appointment_reports.r01.s04.c01",
+            "appointment_reports.r01.s04.c02",
+            "appointment_reports.r01.s10.c02",
+            "appointment_reports.r01.s05.c01",
+            "appointment_reports.r01.s06.c01",
+            "appointment_reports.r01.s07.c01",
+            "appointment_reports.r01.s08.c01",
+            "appointment_reports.r01.s09.c01",
+            "appointment_reports.r01.s09.c02",
+            "appointment_reports.r01.s09.c03",
+            "appointment_reports.r01.s10.c01",
+            "appointment_reports.r01.s11.c01"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "With `Confirmation Call List`: only office, provider, dates and `Include Patient Balance` are enabled."
+        },
+        {
+          "when": "REPORT FORMAT TO PRINT = Cancelled List",
+          "effect": "EXCLUDE PATIENT TYPE, EXCLUDE RESP. PARTY TYPE, CANCELLATION REASON and Include Off Call List become enabled; OPERATORY and the Status checkboxes (Missed / Cancelled) stay disabled and Length appears disabled. The states of SORT BY and Include Patient Balance in this mode are not stated.",
+          "controls": [
+            "appointment_reports.r01.s01.c01",
+            "appointment_reports.r01.s05.c01",
+            "appointment_reports.r01.s06.c01",
+            "appointment_reports.r01.s07.c01",
+            "appointment_reports.r01.s10.c01",
+            "appointment_reports.r01.s08.c01",
+            "appointment_reports.r01.s09.c01",
+            "appointment_reports.r01.s09.c02",
+            "appointment_reports.r01.s09.c03"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "With `Cancelled List` selected: `EXCLUDE PATIENT TYPE`, `EXCLUDE RESP. PARTY TYPE`, `CANCELLATION REASON`, `Include Off Call List` enabled; `OPERATORY`, `Length`, `Status` disabled."
+        },
+        {
+          "when": "OFFICE/GROUP = Office Group",
+          "effect": "The SELECT picker chooses office groups defined in setup instead of offices; with Office it chooses one or more offices. Cross-cutting statement of the document for the Appointment, Recall and Referral criteria screens - recorded once here (Appointment List); it applies to every report of this category that has the Office / Office Group radios.",
+          "controls": [
+            "appointment_reports.r01.s02.c01",
+            "appointment_reports.r01.s02.c02"
+          ],
+          "confidence": "likely",
+          "evidence_quote": "`Office` = one or more offices; `Office Group` = groups from setup."
+        },
+        {
+          "when": "A favorite has already been saved for the report (the legacy tool keeps one saved version per report)",
+          "effect": "The action button ADD TO MY FAVORITES reads UPDATE MY FAVORITES. Cross-cutting statement of the document for the Appointment, Recall and Referral criteria screens - recorded once here (Appointment List); it applies to every report of this category. Whether the relabel shows only when the screen is opened from My Favorites is not stated.",
+          "controls": [],
+          "confidence": "likely",
+          "evidence_quote": "One saved version per report (`ADD TO MY FAVORITES` → `UPDATE MY FAVORITES`)."
+        }
+      ],
+      "corrections": [
+        {
+          "about": "label",
+          "control_id": "appointment_reports.r01.s01.c01",
+          "text": "The section title that our capture cuts off above the six list-format radios is REPORT FORMAT TO PRINT - it replaces the [?] of the inventory.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "the header of the six radios is `REPORT FORMAT TO PRINT`"
+        },
+        {
+          "about": "truncation",
+          "control_id": "",
+          "text": "The capture is clipped at the TOP only. The hidden area holds the PRINT FORMAT section (PDF / Excel, see added_controls) and the title REPORT FORMAT TO PRINT of the list-format radios; the document names nothing else there, and the bottom of the panel (SORT BY) is complete in our capture. With PRINT FORMAT added the criteria panel is fully known.",
+          "resolves_truncation": true,
+          "confidence": "confirmed",
+          "evidence_quote": "The area clipped at the top holds `PRINT FORMAT` (`PDF` / `Excel`) and the header of the six radios is `REPORT FORMAT TO PRINT`."
+        },
+        {
+          "about": "label",
+          "control_id": "appointment_reports.r01.s01.c01",
+          "text": "The fifth radio is confirmed as read: Cancelled From Automated Campaigns (vendor screenshot of May 2024). In June 2023 the same radio was labelled Cancelled From Denticon Patient Engagement - an older-build label of the same option, not a further option.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Fifth radio was `Cancelled From Denticon Patient Engagement` in June 2023 and `Cancelled From Automated Campaigns` from May 2024."
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r01.s01.c01",
+          "text": "Cancelled List and Missed List are history lists - they ignore whether a replacement appointment exists. Call List is the work list: with default parameters it leaves out the appointments that were replaced or taken off the call list.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Cancelled List` and `Missed List` are history; `Call List` is the work list"
+        },
+        {
+          "about": "default",
+          "control_id": "appointment_reports.r01.s04.c01",
+          "text": "DATE RANGE (Start Date / End Date) is matched on the appointment date and defaults to today - the 11/21/2026 of our capture is the capture day, not a fixed default.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`DATE RANGE` | Appointment date; defaults to today."
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r01.s07.c01",
+          "text": "CANCELLATION REASON limits the cancelled appointments to the chosen cancellation reasons - the system reasons and the ones the office defined.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`CANCELLATION REASON` | Limits cancelled appointments to chosen reasons (system and office-defined)."
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r01.s01.c01",
+          "text": "Cancelled From Automated Campaigns lists the appointments that the patient cancelled through an automated campaign message.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Appointments cancelled by the patient through an automated campaign message"
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r01.s10.c01",
+          "text": "Off call list = call-list entries that a user took off the list by ticking Off List (an entry also leaves the call list when it is rescheduled or when a new appointment is made; a removed entry can be restored). What exactly the checkbox adds to each list format is not stated beyond its name.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "An entry leaves the list when rescheduled, when a new appointment is made, or when a user ticks `Off List`; it can be restored."
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r01.s09.c01",
+          "text": "Length, the Status checkboxes Missed / Cancelled and Include Off Call List mirror the filters of the Scheduler's Call List screen - Select Duration (mins), Show Missed, Show Cancelled, Show Off Call List. Length is therefore an appointment-duration filter in minutes; its values other than Any are not documented (see unresolved).",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "Mirror the Scheduler `Call List` screen filters `Select Duration (mins)`, `Show Missed`, `Show Cancelled`, `Show Off Call List`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r01.s01.c01",
+          "text": "Confirmation Call List is the working list for confirmation calls, for one date or a date range.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Working list for confirmation calls for a date or range"
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r01.s01.c01",
+          "text": "Call List is the former menu report Appointment Call List: the missed or cancelled appointments that still have no replacement.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Call List` | old menu name `Appointment Call List` `[P27]` | Missed or cancelled appointments that still have no replacement"
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r01.s01.c01",
+          "text": "Pull Chart List is the former menu report Appointment Pull Chart List: the \"patients for the day\" list used for pulling charts.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Pull Chart List` | old menu name `Appointment Pull Chart List` `[P27]` | \"Patients for the day\" list for pulling charts"
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r01.s01.c01",
+          "text": "Cancelled List is the former menu report Appt Cancellation List / Appointment Cancellation List.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Appt Cancellation List` / `Appointment Cancellation List` | `Appointment List` → `Cancelled List`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r01.s01.c01",
+          "text": "Missed List is the former menu report Missed Appointment List: the history of the appointments marked missed.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Missed List` | old menu name `Missed Appointment List` `[P27]` | History of appointments marked missed"
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r01.s01.c01",
+          "text": "Vendor guides still call the Cancelled From Automated Campaigns format by its old name, Appointment Cancellation Report From Denticon Patient Communication / Engagement.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Appointment Cancellation Report From Denticon Patient Communication / Engagement` | `Appointment List` → `Cancelled From Automated Campaigns`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r01.s10.c02",
+          "text": "Include Patient Balance prints the patient balance on the list - shown as Curr Bal on the Cancelled List and as Bal: on the campaign-cancellation format. (Whether the checkbox is enabled for those two formats is not stated - see unresolved.)",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Include Patient Balance` | Prints the balance (`Curr Bal` / `Bal:`)."
+        },
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "Hidden population rule with no criteria control: a deleted appointment leaves no trace in any appointment report (it exists only in the Audit Trail) - unlike a cancelled appointment, which is removed from the schedule but kept in the appointment history and on the call list. Category-wide statement, recorded once here (Appointment List); it applies to every report of this category.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "A **deleted** appointment leaves no trace in any appointment report (only the Audit Trail)."
+        }
+      ]
+    },
+    {
+      "report_id": "appointment_reports.r04",
+      "legacy_name": "Lab Report",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r04.s01.c01",
+          "text": "REPORT TYPE = Appointment List is the former report Appointment List – Lab: all appointments in the range that carry a lab case.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Appointment List` | `Appointment List – Lab`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r04.s01.c01",
+          "text": "REPORT TYPE = Not Sent is the former report Lab Required Not Sent Appointment List: a lab case is required but has no sent date.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Not Sent` | `Lab Required Not Sent Appointment List`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r04.s01.c01",
+          "text": "REPORT TYPE = Not Received is the former report Lab Sent Not Received Appointment List: cases sent to the lab and not yet received.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Not Received` | `Lab Sent Not Received Appointment List` | `Lab Sent Not Received Appointments` `[P26·img]` | Sent, not yet received"
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r04.s01.c01",
+          "text": "REPORT TYPE = Due Date is the former report Appointment List - Lab due date. That it lists the cases due on the single DUE DATE chosen is unverified (see unresolved).",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Due Date` | `Appointment List - Lab due date`"
+        },
+        {
+          "about": "other",
+          "control_id": "appointment_reports.r04.s05.c01",
+          "text": "A vendor screenshot taken with REPORT TYPE = Not Received also shows a date in the DUE DATE box; whether the box is enabled there cannot be read. The rule that enables it therefore stays unverified (see unresolved).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "With `Not Received` the `DUE DATE` box shows a date; its enabled state is not readable."
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r04.s07.c01",
+          "text": "APPOINTMENT DATE RANGE filters on the date of the appointment that carries the lab case (the lab data are fields of that appointment).",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`APPOINTMENT DATE RANGE` | Filters on the date of the appointment that carries the lab case."
+        },
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "Hidden population rule with no criteria control: a lab case exists only as lab fields on one appointment (the impression or the delivery appointment - the office chooses); an appointment without those fields never appears on the report.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "The case exists only as fields on one appointment (impression or delivery appointment"
+        }
+      ]
+    },
+    {
+      "report_id": "appointment_reports.r05",
+      "legacy_name": "SmartAssist Report Card",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r05.s05.c01",
+          "text": "APPOINTMENT DATE RANGE is matched on the appointment date. A range in the future returns rows only when Include Missed Appointments is ticked.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`APPOINTMENT DATE RANGE` | Appointment date; future dates return rows only with `Include Missed Appointments`."
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r05.s06.c01",
+          "text": "Include Missed Appointments adds the appointments that did not go from checked in through checked out, or that have no posted procedures - future appointments included.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Include Missed Appointments` | Adds appointments not checked in through checked out / without posted procedures, including future ones."
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r05.s03.c02",
+          "text": "Selecting several offices does not widen what a check reads: every appointment is checked only against the data of its own office (OID), so a note or a next appointment that exists in another office counts as missing.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Checks read only data of the office (OID) of the appointment, even when several offices are selected"
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r05.s06.c02",
+          "text": "Include Cancelled Appointments adds the cancelled appointments to the report card; without the tick they are left out.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Include Cancelled Appointments` | Adds cancelled appointments."
+        }
+      ]
+    },
+    {
+      "report_id": "appointment_reports.r08",
+      "legacy_name": "Appointment Detail",
+      "added_controls": [
+        {
+          "section": "OTHER OPTIONS",
+          "label": "Include Patient Home Office",
+          "type": "checkbox",
+          "options": [],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "",
+          "confidence": "confirmed",
+          "evidence_quote": "The clipped third row of `OTHER OPTIONS` is `Include Patient Home Office`; nothing follows it.",
+          "notes": "This is the control behind the clipped placeholder row appointment_reports.r08.s10.c03 ([?]) of the inventory: the third row of OTHER OPTIONS, which the action bar hides in our capture. Vendor screenshots of the criteria screen show it. Taken as a checkbox because it is the third option of the OTHER OPTIONS checkbox column; its default (ticked or not) is not stated and what it prints is unverified."
+        }
+      ],
+      "added_options": [],
+      "dynamic_rules": [
+        {
+          "when": "Only AppointNow Appointments is ticked",
+          "effect": "The three radios Both / Appoint Now / Appoint Now API become enabled; the User picker and both GROUP BY radios (Provider / User) are disabled.",
+          "controls": [
+            "appointment_reports.r08.s03.c01",
+            "appointment_reports.r08.s03.c02",
+            "appointment_reports.r08.s05.c02",
+            "appointment_reports.r08.s08.c01"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "Ticking `Only AppointNow Appointments` enables the three radios and disables the `User` picker and both `GROUP BY` radios."
+        }
+      ],
+      "corrections": [
+        {
+          "about": "truncation",
+          "control_id": "",
+          "text": "The row that the action bar cuts off is the third and last row of OTHER OPTIONS, Include Patient Home Office (see added_controls); nothing follows it, so with that control the criteria panel is complete.",
+          "resolves_truncation": true,
+          "confidence": "confirmed",
+          "evidence_quote": "The clipped third row of `OTHER OPTIONS` is `Include Patient Home Office`; nothing follows it."
+        },
+        {
+          "about": "label",
+          "control_id": "appointment_reports.r08.s10.c03",
+          "text": "The placeholder control [?] (clipped third row of OTHER OPTIONS) is the checkbox Include Patient Home Office recorded under added_controls - one control, not two.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Include Patient Home Office` | Third option, hidden in our capture"
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r08.s03.c01",
+          "text": "Only AppointNow Appointments restricts the report to online (AppointNow) bookings.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`APPOINT NOW` `Only AppointNow Appointments` | Restricts to online bookings"
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r08.s03.c02",
+          "text": "Appoint Now API selects the bookings made by third parties through the AppointNow API.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Appoint Now API` = bookings made by third parties through the AppointNow API."
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r08.s05.c02",
+          "text": "User refers to the user who created the appointment: the vendor uses the report to review the appointments created by a user.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "review appointments created by a user or on a date"
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r08.s06.c01",
+          "text": "The radio chooses the date basis of the range: the date of the appointment (Appointment Date) or the date the appointment was created (Created On Date).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`DATE RANGE` `Appointment Date` / `Created On Date` | Date basis of the range"
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r08.s10.c01",
+          "text": "Without the tick the report lists the non-cancelled appointments only - missed ones are included; Include Cancelled Appointments adds the cancelled ones.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Adds cancelled appointments (default: non-cancelled only, missed included)"
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r08.s08.c01",
+          "text": "GROUP BY sets the first grouping level under the office: Provider or User.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`GROUP BY` `Provider` / `User` | First grouping level under the office."
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r08.s08.c01",
+          "text": "The pre-2021 menu reports Appointment Details Report and Appointment Detail By User are this report; the by-user one corresponds to GROUP BY = User (a restricted variant, Appointment Detail by User, also lives in My Reports).",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Appointment Details Report`, `Appointment Detail By User` | `Appointment Detail` (`GROUP BY` `User`; My Reports variant)"
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r08.s06.c01",
+          "text": "Created dates are stored in Pacific (server) time with no office-local conversion, so DATE RANGE = Created On Date is matched on the Pacific-time creation date.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Created dates are Pacific time"
+        },
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r08.s10.c02",
+          "text": "Include Patient Phone Number adds the patient phone numbers to the listing.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Include Patient Phone Number` | Adds the patient phone numbers."
+        },
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "Hidden population rule with no criteria control: deleted appointments never appear on this report (stated by the document for every appointment report - see Appointment List).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Deleted appointments never appear"
+        }
+      ]
+    },
+    {
+      "report_id": "appointment_reports.r09",
+      "legacy_name": "Lab Cost Report",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "appointment_reports.r09.s01.c01",
+          "text": "REPORT TYPE chooses which date the range is matched against (Sent Date, Due Date or Received Date); the date section keeps the title APPOINTMENT DATE RANGE whichever is chosen. The vendor recommends Received Date. What All matches is unverified (see unresolved).",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`REPORT TYPE` `All` / `Sent Date` / `Due Date` / `Received Date` | Which date the range is matched against"
+        },
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "Hidden population rule with no criteria control: the lab reports read the lab fields stored on the appointment (Lab, Lab Cost, Sent on, Due on, Recvd. on); a case that is not recorded in those fields never appears on the report.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Lab reports read lab fields stored on the appointment** (`Lab`, `Lab Cost`, `Sent on`, `Due on`, `Recvd. on`)"
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    {
+      "report_id": "appointment_reports.r01",
+      "question": "Which criteria are enabled for the four list formats that were never captured - Call List, Pull Chart List, Cancelled From Automated Campaigns and Missed List? The document has the states for Confirmation Call List and Cancelled List only. It presumes (unverified) that Length, Status Missed / Cancelled and Include Off Call List are active for Call List and that SORT BY is enabled for Pull Chart List."
+    },
+    {
+      "report_id": "appointment_reports.r01",
+      "question": "With Cancelled List selected, are SORT BY and Include Patient Balance enabled? The vendor-screenshot states are given only for the two exclude pickers, CANCELLATION REASON, Include Off Call List, OPERATORY, Length and Status."
+    },
+    {
+      "report_id": "appointment_reports.r01",
+      "question": "Values of the Length dropdown other than Any are not documented (the control mirrors the Scheduler Call List filter Select Duration (mins))."
+    },
+    {
+      "report_id": "appointment_reports.r01",
+      "question": "Default of the hidden PRINT FORMAT section is not stated for Appointment List (PDF on the other eight reports of the category), and neither is its position relative to REPORT FORMAT TO PRINT (above it or beside it)."
+    },
+    {
+      "report_id": "appointment_reports.r01",
+      "question": "Older build: in June 2023 the fifth radio was labelled Cancelled From Denticon Patient Engagement; from May 2024 it reads Cancelled From Automated Campaigns. The old label is not added as an option - keep it as a search alias only?"
+    },
+    {
+      "report_id": "appointment_reports.r02",
+      "question": "No vendor article, sample or training page describes this report; its criteria are known from our capture only. The date basis of DATE RANGE and the missed rule the report applies are inferred."
+    },
+    {
+      "report_id": "appointment_reports.r03",
+      "question": "Vendor text documents the purpose of this report, not its criteria screen. Is DATE RANGE matched on the date of the placeholder appointment (not stated)?"
+    },
+    {
+      "report_id": "appointment_reports.r04",
+      "question": "Is the Due Date box enabled only when REPORT TYPE = Due Date (unverified - seen greyed with Appointment List; with Not Received it shows a date but its state is not readable)? Does Due Date list the cases due on that single date, and does APPOINTMENT DATE RANGE still apply then? The criteria states for Not Sent, Not Received and Due Date were never captured."
+    },
+    {
+      "report_id": "appointment_reports.r04",
+      "question": "Newer build: since 2026-11 labs can be assigned per office / office group. Is the LAB picker of Lab Report and Lab Cost Report limited to the labs of the selected offices then? Not stated."
+    },
+    {
+      "report_id": "appointment_reports.r05",
+      "question": "REPORT FORMAT = Summary was not seen in any vendor material (presumably percentages only, per office / provider - unverified); whether it changes any criteria is unknown."
+    },
+    {
+      "report_id": "appointment_reports.r06",
+      "question": "No vendor article describes this report. What does the VENDORS picker list - presumably the API vendors enabled per office under Setup > Offices > Vendor API Settings (New) (unverified)? Is DATE RANGE the appointment date or the confirmation date?"
+    },
+    {
+      "report_id": "appointment_reports.r08",
+      "question": "In the default state (GROUP BY = Provider) the User option of PAGE BREAK BY is disabled. Does it become selectable when GROUP BY = User? Presumed by the document, unverified - so no rule is recorded."
+    },
+    {
+      "report_id": "appointment_reports.r08",
+      "question": "Does ticking Include Cancelled Appointments unlock the CANCELLATION REASON picker (greyed by default)? Presumed by the document, unverified."
+    },
+    {
+      "report_id": "appointment_reports.r08",
+      "question": "What does Include Patient Home Office print (presumably the patient's home office - unverified), and is it ticked by default? The document names it as the third row / third option of OTHER OPTIONS without stating the control type; it is recorded as a checkbox because the other two rows of that column are checkboxes."
+    },
+    {
+      "report_id": "appointment_reports.r08",
+      "question": "What does APPOINTMENT TYPE = Archived select? Live versus archived appointments (archiving being a Patient Overview action) is unverified."
+    },
+    {
+      "report_id": "appointment_reports.r09",
+      "question": "What does REPORT TYPE = All match the date range against? Appointment date is unverified."
+    },
+    {
+      "report_id": "appointment_reports.r09",
+      "question": "What does Exclude Lab Received do? That it drops the cases already received is unverified."
+    },
+    {
+      "report_id": "",
+      "question": "Picker dialogs this document does not describe (it refers to legacy_report_outputs_daily_my.md for the picker dialogs): Provider, User, Operatory, Lab, Vendors, and the layout of the Cancellation Reason, Exclude Patient Type and Exclude Resp. Party Type dialogs - for the last three only the value domain is given. For the User picker the document only notes that AppointNow bookings appear under the system user _APPOINTNOWPAT_ (shown as Appoint Now); whether the picker lists that user is not stated."
+    },
+    {
+      "report_id": "",
+      "question": "The Office / Office Group semantics and the UPDATE MY FAVORITES relabel are stated by the document as cross-cutting facts for the Appointment, Recall and Referral criteria screens and are recorded once, on Appointment List. Confirm that they hold on every report screen of the category, and whether the relabel appears only when the screen is opened from My Favorites."
+    },
+    {
+      "report_id": "",
+      "question": "Older build: pre-2021 menus listed Routing Slips under Appointment Reports; it is now Daily Reports > Routing Slip. Not added here - confirm it is out of scope for this category."
+    },
+    {
+      "report_id": "",
+      "question": "Rights: the vendor lists the security right Reports - Appointment Reports Screen in two variants, Full Control and View Only (view only = see the report list and the parameters, cannot generate). How View Only shows on the criteria screen (PRINT / PREVIEW hidden or disabled?) is not described, so no rule is recorded."
+    },
+    {
+      "report_id": "",
+      "question": "Vendor sources the research could not read and that may document the criteria left open here: the release-note articles (sign-in required) and the video-only webinars 56 Reports, 60 A Dive into SmartAssist and 23 Referrals, Labs, and Miscellaneous Helpful Features. Missed Appointments Not Marked As Missed, New Patients via Appointments and Appointments Confirmed Via Vendors have no vendor description of their criteria at all."
+    }
+  ]
+}

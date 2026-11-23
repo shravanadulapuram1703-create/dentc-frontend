@@ -1,0 +1,1334 @@
+{
+ "category": "refferal_reports",
+ "window_title": "Referral Reports",
+ "report_list": [
+  "Referral Production List",
+  "Referred Out List",
+  "Referral Source List",
+  "External Outgoing Referral Management",
+  "Referral Summary Report",
+  "Referral Count Summary",
+  "Internal Referral Management",
+  "External Incoming Referral Management"
+ ],
+ "reports_without_screenshot": [],
+ "observations": "All 8 screenshots (1366 px wide, 582-589 px high) are plain, unscrolled views of the same Denticon screen, each with a different report selected (1.PNG..8.PNG = the 8 listed reports in list order), so every report has exactly one screenshot and none is missing. Title bar: 'Referral Reports' at the left; 'PGID :2829 / OID :108' followed by a printer icon at the far right. Left panel header 'SELECT REPORT' lists the 8 reports as radio buttons in a 2-column x 4-row grid; the list is fully visible (uniform empty dark area below it, no scrollbar, nothing clipped). A small splitter/collapse handle (three dots) sits on the divider between the two panels. Right panel header 'REPORT CRITERIA' carries a grey 'CLEAR CRITERIA' button (refresh icon) at its right end; a fixed action bar at the bottom of the criteria panel holds the blue buttons 'PRINT / PREVIEW' (printer icon) and 'ADD TO MY FAVORITES' (plus icon). No footer text. No dropdown is expanded and no picker popup is open in any screenshot, so the value lists behind REFERRAL TYPE, SPECIALTY, REFERRED TO/BY and behind every SELECT picker (offices, office groups, providers, referred-to / referred-from / referral-out-to sources, users, procedure codes, patient types) are not visible anywhere in this category and must be captured separately. Recurring patterns: every report starts with PRINT FORMAT (PDF / Excel, PDF selected). Office scope is an Office / Office Group radio pair (Office selected) plus an unlabelled read-only box with a blue SELECT button; the box defaults to 108 (the OID in the title bar). The section is titled OFFICE/GROUP, REFERRED FROM OFFICE/GROUP or REFERRED TO OFFICE/GROUP depending on the report, and Internal Referral Management shows both From (108) and To (ALL) side by side. Referral Source List is the only report where the office radios and SELECT button are greyed out. Date sections are titled PROCEDURE DATE RANGE (Referral Production List, Referral Summary Report, Referral Count Summary), REFERRED OUT DATE RANGE (Referred Out List) or REFERRAL DATE RANGE (the three Management reports); Referral Source List has no date range. Populated date fields show 11/21/2026 (apparently the capture date) with a calendar icon inside the field; the FIRST VISIT DATE RANGE fields are empty with a grey 'Select Date' placeholder. Multi-select filters are unlabelled read-only boxes (default ALL, or None for EXCLUDE PATIENT TYPE) with a blue SELECT button whose icon varies: building = office/office group and PROCEDURE CODES, single person = provider pickers, person-plus = USERS / REFERRED TO / REFERRED FROM / REFERRAL OUT TO / EXCLUDE PATIENT TYPE. Pickers, dropdowns and the radio rows have no field label of their own (label left empty; the section header serves as the label). Referral Summary Report and Referral Count Summary show identical criteria. Status vocabularies: External Outgoing and External Incoming use a 3-column checkbox grid (All, Accepted, Rejected, Pending, Cancelled, Completed, In Progress, Not Needed, Expired; only All checked); Internal uses radios (All, Completed, Incomplete; All selected); External Incoming adds CONTACT STATUSES (All, No Response, Patient To Call, Appointment Scheduled, Referral Refused; only All checked); 'Exclude Deleted Referrals' (checked) is visible on Internal and External Incoming. Text fidelity: at this resolution the bold upper-case section-header font draws capital G almost like C (the headers look like 'OFFICE/CROUP', 'DATE RANCE', 'CROUP BY'). A pixel-level comparison of the two glyphs inside the same header (the C of CODE vs the G of RANGE in ZIP CODE RANGE; the C of OFFICE vs the G of GROUP) shows the G carries a heavier lower-right spur that the C lacks, and the regular-weight radio label 'Office Group' shows a clear G, so these headers are transcribed as GROUP / RANGE / GROUP BY. Genuine legacy typo kept as displayed: 'REFFERED TO PROVIDER' (Internal Referral Management, 7.PNG); the same wording is spelt correctly as 'REFERRED TO PROVIDER' on External Incoming (8.PNG). The header 'FIRST VISIT DATE RANGE ( LEAVE BLANK FOR ALL PATIENTS )' is displayed with spaces inside the parentheses. Truncation: the criteria content runs underneath the fixed action bar and no scrollbar is drawn anywhere. In 7.PNG (Internal Referral Management) only the top 15 px of the GROUP BY header (with its text) is visible - its controls are hidden. In 4.PNG (External Outgoing Referral Management) the third STATUSES row ends flush against the bar with no closing separator line or blank panel background, so further rows/sections may be hidden. A scrolled capture of both reports is needed to complete them. The other six reports end with blank panel background above the action bar (only 16 px of it in 8.PNG) and are complete. A sweep of every ink cluster in each criteria panel found no further controls: no right-edge checkboxes such as Page Break, no icons beside fields other than the calendar icons, and no instruction text other than the FIRST VISIT header.",
+ "report_count": 8,
+ "control_count": 91,
+ "reports": [
+  {
+   "report_id": "refferal_reports.r01",
+   "name": "Referral Production List",
+   "screenshots": [
+    "1.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Shown only in 1.PNG (radio 'Referral Production List' filled, left column row 1). PROCEDURE DATE RANGE (left half) and FIRST VISIT DATE RANGE ( LEAVE BLANK FOR ALL PATIENTS ) (right half) are side by side; every other section is full width. Blank panel space is visible below OTHER OPTIONS, so the criteria are complete. No dropdown is expanded, so REFERRAL TYPE values other than ALL are unknown.",
+   "controls": [
+    {
+     "control_id": "refferal_reports.r01.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "No row label; two radios on one line."
+    },
+    {
+     "control_id": "refferal_reports.r01.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "No row label; radios on the line above the office box."
+    },
+    {
+     "control_id": "refferal_reports.r01.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only box on the row below the Office / Office Group radios; blue \"SELECT\" button (building icon) to its right. 108 matches the OID shown in the title bar."
+    },
+    {
+     "control_id": "refferal_reports.r01.s03.c01",
+     "section": "PROCEDURE DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Left half of the panel (side by side with FIRST VISIT DATE RANGE). Calendar icon inside the field at the right."
+    },
+    {
+     "control_id": "refferal_reports.r01.s03.c02",
+     "section": "PROCEDURE DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Left half of the panel. Calendar icon inside the field at the right."
+    },
+    {
+     "control_id": "refferal_reports.r01.s04.c01",
+     "section": "FIRST VISIT DATE RANGE ( LEAVE BLANK FOR ALL PATIENTS )",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Right half of the panel (side by side with PROCEDURE DATE RANGE). Field is empty and shows the placeholder text \"Select Date\"; calendar icon inside the field at the right. The instruction to leave blank for all patients is part of the section header text."
+    },
+    {
+     "control_id": "refferal_reports.r01.s04.c02",
+     "section": "FIRST VISIT DATE RANGE ( LEAVE BLANK FOR ALL PATIENTS )",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Right half of the panel. Field is empty and shows the placeholder text \"Select Date\"; calendar icon inside the field at the right."
+    },
+    {
+     "control_id": "refferal_reports.r01.s05.c01",
+     "section": "ZIP CODE RANGE",
+     "label": "From",
+     "type": "text_input",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Short empty text box, no placeholder; full-width section."
+    },
+    {
+     "control_id": "refferal_reports.r01.s05.c02",
+     "section": "ZIP CODE RANGE",
+     "label": "Through",
+     "type": "text_input",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Short empty text box, no placeholder."
+    },
+    {
+     "control_id": "refferal_reports.r01.s06.c01",
+     "section": "REFERRAL TYPE",
+     "label": "",
+     "type": "dropdown",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "No own label (section header acts as label). List collapsed - other values not visible."
+    },
+    {
+     "control_id": "refferal_reports.r01.s07.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Group By Zip Code",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Only control in this section."
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "refferal_reports.r01.d01",
+     "when": "OFFICE/GROUP = Office Group",
+     "effect": "The SELECT picker chooses office groups defined in setup instead of offices; with Office it chooses one or more offices. Cross-cutting statement of the document for the Appointment, Recall and Referral criteria screens - recorded once here (Referral Production List); it applies to every report of this category that has the Office / Office Group radios.",
+     "controls": [
+      "refferal_reports.r01.s02.c01",
+      "refferal_reports.r01.s02.c02"
+     ],
+     "confidence": "likely",
+     "evidence_quote": "`Office` = one or more offices; `Office Group` = groups from setup."
+    },
+    {
+     "rule_id": "refferal_reports.r01.d02",
+     "when": "A favorite has already been saved for the report (the legacy tool keeps one saved version per report)",
+     "effect": "The action button ADD TO MY FAVORITES reads UPDATE MY FAVORITES. Cross-cutting statement of the document for the Appointment, Recall and Referral criteria screens - recorded once here (Referral Production List); it applies to every report of this category. Whether the relabel shows only when the screen is opened from My Favorites is not stated.",
+     "controls": [],
+     "confidence": "likely",
+     "evidence_quote": "One saved version per report (`ADD TO MY FAVORITES` → `UPDATE MY FAVORITES`)."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "refferal_reports.r01.k01",
+     "about": "meaning",
+     "control_id": "refferal_reports.r01.s03.c01",
+     "text": "PROCEDURE DATE RANGE is the period of the posted procedures that are counted.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`PROCEDURE DATE RANGE` | Period of the posted procedures counted."
+    },
+    {
+     "correction_id": "refferal_reports.r01.k02",
+     "about": "meaning",
+     "control_id": "refferal_reports.r01.s04.c01",
+     "text": "FIRST VISIT DATE RANGE restricts the report to patients whose first visit falls in the range (a new-patient cohort); left blank, all patients are included, as the section title says.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "Restricts to patients whose first visit falls in the range (new-patient cohort)."
+    },
+    {
+     "correction_id": "refferal_reports.r01.k03",
+     "about": "meaning",
+     "control_id": "refferal_reports.r01.s05.c01",
+     "text": "ZIP CODE RANGE From / Through filter on the patient's zip code.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`ZIP CODE RANGE` `From` / `Through` | Patient zip filter."
+    },
+    {
+     "correction_id": "refferal_reports.r01.k04",
+     "about": "meaning",
+     "control_id": "refferal_reports.r01.s06.c01",
+     "text": "REFERRAL TYPE is a single choice: one referral type or ALL.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`REFERRAL TYPE` | One referral type or `ALL`."
+    },
+    {
+     "correction_id": "refferal_reports.r01.k05",
+     "about": "meaning",
+     "control_id": "refferal_reports.r01.s07.c01",
+     "text": "Group By Zip Code switches the report to its by-zip-code variant - the former report Referral Production Listing by Zipcode.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Referral Production Listing by Zipcode` | `Referral Production List` → `Group By Zip Code`"
+    },
+    {
+     "correction_id": "refferal_reports.r01.k06",
+     "about": "meaning",
+     "control_id": "refferal_reports.r01.s02.c02",
+     "text": "Vendor text describes the report as single-office and current-state: the data is limited to the office the report is run in, for patients currently in that office, with no cross-office data (history is lost when the patient's office or referral changes). How that limit works together with the Office / Office Group picker of the criteria screen is not stated (see unresolved).",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "Data is limited to the office the report is run in, for patients currently in that office; no cross-office"
+    }
+   ]
+  },
+  {
+   "report_id": "refferal_reports.r02",
+   "name": "Referred Out List",
+   "screenshots": [
+    "2.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Shown only in 2.PNG (radio 'Referred Out List' filled, left column row 2). EXCLUDE PATIENT TYPE (left) and REFERRAL OUT TO (right) are side by side; other sections are full width. Large blank area below SPECIALTY, so the criteria are complete. No popup or expanded dropdown shown, so the patient-type list, the referral-out-to list and the specialty values are not visible.",
+   "controls": [
+    {
+     "control_id": "refferal_reports.r02.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "No row label; two radios on one line."
+    },
+    {
+     "control_id": "refferal_reports.r02.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "No row label; radios on the line above the office box."
+    },
+    {
+     "control_id": "refferal_reports.r02.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only box below the Office / Office Group radios; blue \"SELECT\" button (building icon) to its right."
+    },
+    {
+     "control_id": "refferal_reports.r02.s03.c01",
+     "section": "REFERRED OUT DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field at the right. Full-width section."
+    },
+    {
+     "control_id": "refferal_reports.r02.s03.c02",
+     "section": "REFERRED OUT DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field at the right."
+    },
+    {
+     "control_id": "refferal_reports.r02.s04.c01",
+     "section": "EXCLUDE PATIENT TYPE",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "Left half of the panel (side by side with REFERRAL OUT TO). Unlabelled read-only box showing \"None\"; blue \"SELECT\" button (person-plus icon) to its right."
+    },
+    {
+     "control_id": "refferal_reports.r02.s05.c01",
+     "section": "REFERRAL OUT TO",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right half of the panel (side by side with EXCLUDE PATIENT TYPE). Unlabelled read-only box showing \"ALL\"; blue \"SELECT\" button (person-plus icon) to its right."
+    },
+    {
+     "control_id": "refferal_reports.r02.s06.c01",
+     "section": "SPECIALTY",
+     "label": "",
+     "type": "dropdown",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "No own label (section header acts as label). List collapsed - other values not visible."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "refferal_reports.r02.k01",
+     "about": "meaning",
+     "control_id": "refferal_reports.r02.s05.c01",
+     "text": "The report reads the single Referred To field of the patient record, so one patient is one referral; REFERRAL OUT TO is read by the document as a filter on that referred-to referral source. (The document presumes - unverified - that referral cases created with the Refer To workflow are reported by the Referral Management reports instead.)",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "Reads the single `Referred To` field of the patient record `[P64]`, so one patient = one referral"
+    }
+   ]
+  },
+  {
+   "report_id": "refferal_reports.r03",
+   "name": "Referral Source List",
+   "screenshots": [
+    "3.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Shown only in 3.PNG (radio 'Referral Source List' filled, left column row 3). This is the only report in the category where the OFFICE/GROUP controls are disabled (radios and SELECT button greyed; box keeps the value 108). No date range for this report. REFERRED TO/BY (left) and REFERRAL TYPE (right) are side by side. Large blank area below, so the criteria are complete.",
+   "controls": [
+    {
+     "control_id": "refferal_reports.r03.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "No row label; two radios on one line."
+    },
+    {
+     "control_id": "refferal_reports.r03.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": false,
+     "notes": "Greyed out / disabled for this report: both radios and their labels are light grey; Office still shows as the selected (grey-filled) radio."
+    },
+    {
+     "control_id": "refferal_reports.r03.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": false,
+     "notes": "Unlabelled read-only box still showing 108 (box and text look the same as on the other reports); the \"SELECT\" button (building icon) to its right is greyed out / disabled - its fill is grey instead of the blue used on every other report."
+    },
+    {
+     "control_id": "refferal_reports.r03.s03.c01",
+     "section": "REFERRED TO/BY",
+     "label": "",
+     "type": "dropdown",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Left half of the panel (side by side with REFERRAL TYPE). No own label. List collapsed - other values not visible."
+    },
+    {
+     "control_id": "refferal_reports.r03.s04.c01",
+     "section": "REFERRAL TYPE",
+     "label": "",
+     "type": "dropdown",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right half of the panel (side by side with REFERRED TO/BY). No own label. List collapsed - other values not visible."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "refferal_reports.r03.k01",
+     "about": "other",
+     "control_id": "refferal_reports.r03.s02.c01",
+     "text": "The greyed OFFICE/GROUP section (both radios and the SELECT button) is by design: it is disabled in the vendor's own screenshot of this screen too, because referral sources are organisation-wide.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "The disabled `OFFICE/GROUP` section is by design."
+    },
+    {
+     "correction_id": "refferal_reports.r03.k02",
+     "about": "meaning",
+     "control_id": "refferal_reports.r03.s03.c01",
+     "text": "REFERRED TO/BY filters the sources on their Referred by/To setting (in referral-source setup: Referred By / Referred To / Both); the report footer echoes the choice as a code, 99 standing for all. The option labels of the dropdown itself are not documented (see unresolved).",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`Referral By/To : <code>` (99 printed for all)"
+    }
+   ]
+  },
+  {
+   "report_id": "refferal_reports.r04",
+   "name": "External Outgoing Referral Management",
+   "screenshots": [
+    "4.PNG"
+   ],
+   "possibly_truncated": true,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Shown only in 4.PNG (radio 'External Outgoing Referral Management' filled, left column row 4). Side-by-side pairs: REFERRED FROM PROVIDER | REFERRED TO, and PROCEDURE CODES | USERS; other sections full width. POSSIBLY TRUNCATED: the third row of the STATUSES checkbox grid (In Progress / Not Needed / Expired) ends flush against the fixed bottom action bar (pixel scan: the row fills y=519-538 and the bar starts at y=539). Rows 1 and 2 are each closed by a 2 px separator line, row 3 is not, and no blank panel background is visible beneath it - every complete report in this category shows blank panel background above the bar, and 7.PNG proves the bar hides content beneath it. More rows or sections may therefore exist below (for comparison, the sibling External Incoming report shows an 'Exclude Deleted Referrals' checkbox as a 4th STATUSES row), but nothing further is visible here and nothing was assumed. No scrollbar is drawn. A scrolled capture is needed to confirm the end of this report. Statuses are listed row by row (left to right); grid position is in each control's notes. Nothing is greyed out.",
+   "controls": [
+    {
+     "control_id": "refferal_reports.r04.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "No row label; two radios on one line."
+    },
+    {
+     "control_id": "refferal_reports.r04.s02.c01",
+     "section": "REFERRED FROM OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "No row label; radios on the line above the office box. Full-width section."
+    },
+    {
+     "control_id": "refferal_reports.r04.s02.c02",
+     "section": "REFERRED FROM OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only box below the Office / Office Group radios; blue \"SELECT\" button (building icon) to its right."
+    },
+    {
+     "control_id": "refferal_reports.r04.s03.c01",
+     "section": "REFERRAL DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field at the right. Full-width section."
+    },
+    {
+     "control_id": "refferal_reports.r04.s03.c02",
+     "section": "REFERRAL DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field at the right."
+    },
+    {
+     "control_id": "refferal_reports.r04.s04.c01",
+     "section": "REFERRED FROM PROVIDER",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Left half of the panel (side by side with REFERRED TO). Unlabelled read-only box showing \"ALL\"; blue \"SELECT\" button (single-person icon) to its right."
+    },
+    {
+     "control_id": "refferal_reports.r04.s05.c01",
+     "section": "REFERRED TO",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right half of the panel (side by side with REFERRED FROM PROVIDER). Unlabelled read-only box showing \"ALL\"; blue \"SELECT\" button (person-plus icon) to its right."
+    },
+    {
+     "control_id": "refferal_reports.r04.s06.c01",
+     "section": "PROCEDURE CODES",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Left half of the panel (side by side with USERS). Unlabelled read-only box showing \"ALL\"; blue \"SELECT\" button with a building icon (the same glyph as on the office SELECT button, pixel-compared) to its right."
+    },
+    {
+     "control_id": "refferal_reports.r04.s07.c01",
+     "section": "USERS",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right half of the panel (side by side with PROCEDURE CODES). Unlabelled read-only box showing \"ALL\"; blue \"SELECT\" button (person-plus icon) to its right."
+    },
+    {
+     "control_id": "refferal_reports.r04.s08.c01",
+     "section": "SPECIALTY",
+     "label": "",
+     "type": "dropdown",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "No own label (section header acts as label). Full-width section. List collapsed - other values not visible."
+    },
+    {
+     "control_id": "refferal_reports.r04.s09.c01",
+     "section": "STATUSES",
+     "label": "All",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Checkbox grid of 3 columns x 3 visible rows; this is row 1, column 1. Only checked box; the other status checkboxes are drawn enabled (not greyed) while All is checked."
+    },
+    {
+     "control_id": "refferal_reports.r04.s09.c02",
+     "section": "STATUSES",
+     "label": "Accepted",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 1, column 2."
+    },
+    {
+     "control_id": "refferal_reports.r04.s09.c03",
+     "section": "STATUSES",
+     "label": "Rejected",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 1, column 3."
+    },
+    {
+     "control_id": "refferal_reports.r04.s09.c04",
+     "section": "STATUSES",
+     "label": "Pending",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 2, column 1."
+    },
+    {
+     "control_id": "refferal_reports.r04.s09.c05",
+     "section": "STATUSES",
+     "label": "Cancelled",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 2, column 2."
+    },
+    {
+     "control_id": "refferal_reports.r04.s09.c06",
+     "section": "STATUSES",
+     "label": "Completed",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 2, column 3."
+    },
+    {
+     "control_id": "refferal_reports.r04.s09.c07",
+     "section": "STATUSES",
+     "label": "In Progress",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 3, column 1. Last visible row - it ends flush against the bottom action bar."
+    },
+    {
+     "control_id": "refferal_reports.r04.s09.c08",
+     "section": "STATUSES",
+     "label": "Not Needed",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 3, column 2."
+    },
+    {
+     "control_id": "refferal_reports.r04.s09.c09",
+     "section": "STATUSES",
+     "label": "Expired",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 3, column 3."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "refferal_reports.r04.k01",
+     "about": "options",
+     "control_id": "",
+     "text": "The eight specific status checkboxes of the grid (Accepted, Rejected, Pending, Cancelled, Completed, In Progress, Not Needed, Expired) carry exactly the labels of the vendor's fixed status vocabulary of a referral case - Pending is the default status of a new case and Expired is set automatically after 30 days. The vocabulary has no further value, so another status checkbox below the third row is unlikely; whether anything else follows the grid is still unknown (see unresolved). The vocabulary is documented for the Referral Management utility: that the checkboxes filter the Referral Status of the case is the expected reading, and no vendor screenshot shows the criteria of this report.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "Referral cases have a fixed status vocabulary:** `Pending` (default), `Accepted`, `Rejected`, `In Progress`,"
+    }
+   ]
+  },
+  {
+   "report_id": "refferal_reports.r05",
+   "name": "Referral Summary Report",
+   "screenshots": [
+    "5.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Shown only in 5.PNG (radio 'Referral Summary Report' filled, right column row 1). All sections full width. Criteria are identical to Referral Count Summary (6.PNG). Large blank area below REFERRAL TYPE, so the criteria are complete.",
+   "controls": [
+    {
+     "control_id": "refferal_reports.r05.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "No row label; two radios on one line."
+    },
+    {
+     "control_id": "refferal_reports.r05.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "No row label; radios on the line above the office box."
+    },
+    {
+     "control_id": "refferal_reports.r05.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only box below the Office / Office Group radios; blue \"SELECT\" button (building icon) to its right."
+    },
+    {
+     "control_id": "refferal_reports.r05.s03.c01",
+     "section": "PROCEDURE DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Full-width section (label column is wider here than in the other reports). Calendar icon inside the field at the right."
+    },
+    {
+     "control_id": "refferal_reports.r05.s03.c02",
+     "section": "PROCEDURE DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field at the right."
+    },
+    {
+     "control_id": "refferal_reports.r05.s04.c01",
+     "section": "REFERRAL TYPE",
+     "label": "",
+     "type": "dropdown",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "No own label (section header acts as label). List collapsed - other values not visible."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "refferal_reports.r05.k01",
+     "about": "meaning",
+     "control_id": "refferal_reports.r05.s03.c01",
+     "text": "PROCEDURE DATE RANGE is applied to the posted procedures.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`PROCEDURE DATE RANGE` (posted procedures)"
+    }
+   ]
+  },
+  {
+   "report_id": "refferal_reports.r06",
+   "name": "Referral Count Summary",
+   "screenshots": [
+    "6.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Shown only in 6.PNG (radio 'Referral Count Summary' filled, right column row 2). All sections full width. Criteria are identical to Referral Summary Report (5.PNG). Large blank area below REFERRAL TYPE, so the criteria are complete.",
+   "controls": [
+    {
+     "control_id": "refferal_reports.r06.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "No row label; two radios on one line."
+    },
+    {
+     "control_id": "refferal_reports.r06.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "No row label; radios on the line above the office box."
+    },
+    {
+     "control_id": "refferal_reports.r06.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only box below the Office / Office Group radios; blue \"SELECT\" button (building icon) to its right."
+    },
+    {
+     "control_id": "refferal_reports.r06.s03.c01",
+     "section": "PROCEDURE DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Full-width section (label column is wider here than in the other reports). Calendar icon inside the field at the right."
+    },
+    {
+     "control_id": "refferal_reports.r06.s03.c02",
+     "section": "PROCEDURE DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field at the right."
+    },
+    {
+     "control_id": "refferal_reports.r06.s04.c01",
+     "section": "REFERRAL TYPE",
+     "label": "",
+     "type": "dropdown",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "No own label (section header acts as label). List collapsed - other values not visible."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "refferal_reports.r06.k01",
+     "about": "meaning",
+     "control_id": "refferal_reports.r06.s03.c01",
+     "text": "PROCEDURE DATE RANGE is the period in which the referred patients were seen: the report counts, per referral source, the referred patients seen in the period. What exactly counts as seen is unverified (see unresolved).",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "count of referred patients seen in the period"
+    }
+   ]
+  },
+  {
+   "report_id": "refferal_reports.r07",
+   "name": "Internal Referral Management",
+   "screenshots": [
+    "7.PNG"
+   ],
+   "possibly_truncated": true,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Shown only in 7.PNG (radio 'Internal Referral Management' filled, right column row 3). Side-by-side pairs: REFERRED FROM OFFICE/GROUP | REFERRED TO OFFICE/GROUP, REFERRED FROM PROVIDER | REFFERED TO PROVIDER, PROCEDURE CODES | USERS; other sections full width. TRUNCATED: the last thing visible is the grey section header 'GROUP BY' - only the top 15 px of the header bar with its text (pixel scan: header starts at y=521, the fixed bottom action bar, which has the same fill colour, covers everything from y=536). NONE of the GROUP BY controls are visible and anything below it is unknown, so the GROUP BY section is listed with no controls. A scrolled screenshot is needed to capture them. No scrollbar is drawn. The header 'REFFERED TO PROVIDER' is a genuine legacy typo, kept as displayed. Nothing is greyed out.",
+   "controls": [
+    {
+     "control_id": "refferal_reports.r07.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "No row label; two radios on one line."
+    },
+    {
+     "control_id": "refferal_reports.r07.s02.c01",
+     "section": "REFERRED FROM OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left half of the panel (side by side with REFERRED TO OFFICE/GROUP). No row label."
+    },
+    {
+     "control_id": "refferal_reports.r07.s02.c02",
+     "section": "REFERRED FROM OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Left half. Unlabelled read-only box below the radios showing 108; blue \"SELECT\" button (building icon) to its right."
+    },
+    {
+     "control_id": "refferal_reports.r07.s03.c01",
+     "section": "REFERRED TO OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Right half of the panel (side by side with REFERRED FROM OFFICE/GROUP). No row label."
+    },
+    {
+     "control_id": "refferal_reports.r07.s03.c02",
+     "section": "REFERRED TO OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right half. Unlabelled read-only box below the radios showing \"ALL\"; blue \"SELECT\" button (building icon) to its right."
+    },
+    {
+     "control_id": "refferal_reports.r07.s04.c01",
+     "section": "REFERRAL DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field at the right. Full-width section."
+    },
+    {
+     "control_id": "refferal_reports.r07.s04.c02",
+     "section": "REFERRAL DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field at the right."
+    },
+    {
+     "control_id": "refferal_reports.r07.s05.c01",
+     "section": "REFERRED FROM PROVIDER",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Left half of the panel (side by side with REFFERED TO PROVIDER). Unlabelled read-only box showing \"ALL\"; blue \"SELECT\" button (single-person icon) to its right."
+    },
+    {
+     "control_id": "refferal_reports.r07.s06.c01",
+     "section": "REFFERED TO PROVIDER",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right half of the panel (side by side with REFERRED FROM PROVIDER). Header is misspelt in the legacy UI exactly as transcribed (REFFERED - the glyph bitmap reads R-E-F-F-E-R-E-D, whereas the left neighbour and 8.PNG read R-E-F-E-R-R-E-D). Unlabelled read-only box showing \"ALL\"; blue \"SELECT\" button (single-person icon) to its right."
+    },
+    {
+     "control_id": "refferal_reports.r07.s07.c01",
+     "section": "PROCEDURE CODES",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Left half of the panel (side by side with USERS). Unlabelled read-only box showing \"ALL\"; blue \"SELECT\" button with a building icon (the same glyph as on the office SELECT button, pixel-compared) to its right."
+    },
+    {
+     "control_id": "refferal_reports.r07.s08.c01",
+     "section": "USERS",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right half of the panel (side by side with PROCEDURE CODES). Unlabelled read-only box showing \"ALL\"; blue \"SELECT\" button (person-plus icon) to its right."
+    },
+    {
+     "control_id": "refferal_reports.r07.s09.c01",
+     "section": "SPECIALTY",
+     "label": "",
+     "type": "dropdown",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "No own label (section header acts as label). Full-width section. List collapsed - other values not visible."
+    },
+    {
+     "control_id": "refferal_reports.r07.s10.c01",
+     "section": "STATUSES",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "All",
+      "Completed",
+      "Incomplete"
+     ],
+     "default_value": "All",
+     "enabled": true,
+     "notes": "No row label; three radios on one line (first row of the section). Unlike the two External reports, statuses here are radios, not checkboxes."
+    },
+    {
+     "control_id": "refferal_reports.r07.s10.c02",
+     "section": "STATUSES",
+     "label": "Exclude Deleted Referrals",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Second row of the STATUSES section, below the radios."
+    }
+   ]
+  },
+  {
+   "report_id": "refferal_reports.r08",
+   "name": "External Incoming Referral Management",
+   "screenshots": [
+    "8.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Shown only in 8.PNG (radio 'External Incoming Referral Management' filled, right column row 4). REFERRED TO PROVIDER (left) and REFERRED FROM (right) are side by side; other sections full width. Unlike External Outgoing / Internal, no PROCEDURE CODES, USERS or SPECIALTY sections are visible for this report, and no GROUP BY. A 16 px strip of blank panel background (y=519-534) is visible between the last CONTACT STATUSES row and the action bar - the same background that fills the empty area of the short reports - so the criteria end there and the report is treated as complete, though the margin is small. Checkboxes are listed row by row (left to right); grid position is in each control's notes. Nothing is greyed out; the individual status checkboxes are drawn enabled while All is checked.",
+   "controls": [
+    {
+     "control_id": "refferal_reports.r08.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "No row label; two radios on one line."
+    },
+    {
+     "control_id": "refferal_reports.r08.s02.c01",
+     "section": "REFERRED TO OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "No row label; radios on the line above the office box. Full-width section."
+    },
+    {
+     "control_id": "refferal_reports.r08.s02.c02",
+     "section": "REFERRED TO OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only box below the Office / Office Group radios; blue \"SELECT\" button (building icon) to its right."
+    },
+    {
+     "control_id": "refferal_reports.r08.s03.c01",
+     "section": "REFERRAL DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field at the right. Full-width section."
+    },
+    {
+     "control_id": "refferal_reports.r08.s03.c02",
+     "section": "REFERRAL DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field at the right."
+    },
+    {
+     "control_id": "refferal_reports.r08.s04.c01",
+     "section": "REFERRED TO PROVIDER",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Left half of the panel (side by side with REFERRED FROM). Unlabelled read-only box showing \"ALL\"; blue \"SELECT\" button (single-person icon) to its right. Spelt correctly here (REFERRED), unlike in Internal Referral Management."
+    },
+    {
+     "control_id": "refferal_reports.r08.s05.c01",
+     "section": "REFERRED FROM",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right half of the panel (side by side with REFERRED TO PROVIDER). Unlabelled read-only box showing \"ALL\"; blue \"SELECT\" button (person-plus icon) to its right."
+    },
+    {
+     "control_id": "refferal_reports.r08.s06.c01",
+     "section": "STATUSES",
+     "label": "All",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Checkbox grid of 3 columns x 3 rows plus a 4th full-width row; this is row 1, column 1."
+    },
+    {
+     "control_id": "refferal_reports.r08.s06.c02",
+     "section": "STATUSES",
+     "label": "Accepted",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 1, column 2."
+    },
+    {
+     "control_id": "refferal_reports.r08.s06.c03",
+     "section": "STATUSES",
+     "label": "Rejected",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 1, column 3."
+    },
+    {
+     "control_id": "refferal_reports.r08.s06.c04",
+     "section": "STATUSES",
+     "label": "Pending",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 2, column 1."
+    },
+    {
+     "control_id": "refferal_reports.r08.s06.c05",
+     "section": "STATUSES",
+     "label": "Cancelled",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 2, column 2."
+    },
+    {
+     "control_id": "refferal_reports.r08.s06.c06",
+     "section": "STATUSES",
+     "label": "Completed",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 2, column 3."
+    },
+    {
+     "control_id": "refferal_reports.r08.s06.c07",
+     "section": "STATUSES",
+     "label": "In Progress",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 3, column 1."
+    },
+    {
+     "control_id": "refferal_reports.r08.s06.c08",
+     "section": "STATUSES",
+     "label": "Not Needed",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 3, column 2."
+    },
+    {
+     "control_id": "refferal_reports.r08.s06.c09",
+     "section": "STATUSES",
+     "label": "Expired",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 3, column 3."
+    },
+    {
+     "control_id": "refferal_reports.r08.s06.c10",
+     "section": "STATUSES",
+     "label": "Exclude Deleted Referrals",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Row 4 of the STATUSES section, a single full-width row below the status grid (not a status value itself)."
+    },
+    {
+     "control_id": "refferal_reports.r08.s07.c01",
+     "section": "CONTACT STATUSES",
+     "label": "All",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Checkbox grid of 3 columns x 2 rows; this is row 1, column 1. Only checked box in this section."
+    },
+    {
+     "control_id": "refferal_reports.r08.s07.c02",
+     "section": "CONTACT STATUSES",
+     "label": "No Response",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 1, column 2."
+    },
+    {
+     "control_id": "refferal_reports.r08.s07.c03",
+     "section": "CONTACT STATUSES",
+     "label": "Patient To Call",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 1, column 3."
+    },
+    {
+     "control_id": "refferal_reports.r08.s07.c04",
+     "section": "CONTACT STATUSES",
+     "label": "Appointment Scheduled",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 2, column 1."
+    },
+    {
+     "control_id": "refferal_reports.r08.s07.c05",
+     "section": "CONTACT STATUSES",
+     "label": "Referral Refused",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 2, column 2. Row 2, column 3 is an empty cell."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "refferal_reports.r08.k01",
+     "about": "other",
+     "control_id": "",
+     "text": "Build history: this is the newest report of the category - the external-incoming referral feature it reports on dates from 2023. The vendor's June 2023 screenshot of the Referral Reports list shows seven reports, without External Incoming Referral Management; our 2026 capture has eight.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`External Incoming Referral Management` was added after June 2023."
+    }
+   ]
+  }
+ ],
+ "supplement_unresolved": [
+  {
+   "report_id": "refferal_reports.r01",
+   "question": "Vendor text says the results are limited to the office the report is run in (patients currently in that office, no cross-office data). How does that square with the OFFICE/GROUP picker, which allows several offices or an office group?"
+  },
+  {
+   "report_id": "refferal_reports.r01",
+   "question": "Values of the REFERRAL TYPE dropdown other than ALL are the organisation's referral types (tenant data); no list is documented (same dropdown on Referral Source List, Referral Summary Report and Referral Count Summary)."
+  },
+  {
+   "report_id": "refferal_reports.r02",
+   "question": "Values of the SPECIALTY dropdown are not documented (same dropdown on External Outgoing Referral Management and Internal Referral Management)."
+  },
+  {
+   "report_id": "refferal_reports.r02",
+   "question": "Is REFERRED OUT DATE RANGE matched on the patient's Ref. To Date (presumed, unverified)? Does the REFERRAL OUT TO picker list the referral sources (the document's reading; its dialog is not described)?"
+  },
+  {
+   "report_id": "refferal_reports.r03",
+   "question": "Option labels of the REFERRED TO/BY dropdown are not documented. The referral-source field Referred by/To takes Referred By / Referred To / Both and the footer echoes a code (99 = all), so the list is probably ALL, Referred By, Referred To, Both - verify the labels and their order."
+  },
+  {
+   "report_id": "refferal_reports.r04",
+   "question": "Truncation NOT resolved: what follows the third STATUSES row? An Exclude Deleted Referrals checkbox and a GROUP BY section may follow, as on the sibling reports; no vendor screenshot shows these criteria."
+  },
+  {
+   "report_id": "refferal_reports.r04",
+   "question": "No vendor description of this report exists. What USERS filters (the user who created the referral?), what the REFERRED TO picker lists (external referral sources?) and what SPECIALTY refers to (specialty of the referred-to source?) are inferred only."
+  },
+  {
+   "report_id": "refferal_reports.r06",
+   "question": "Does \"seen\" in this report mean a posted procedure inside PROCEDURE DATE RANGE (presumed, unverified)?"
+  },
+  {
+   "report_id": "refferal_reports.r07",
+   "question": "Truncation NOT resolved: the GROUP BY section header is visible in our capture, but its options are hidden (the screenshot inventory therefore holds no GROUP BY control for this report) and anything below GROUP BY is unknown. The document guesses from / to office or provider - unverified; no vendor screenshot shows these criteria, so no control is added."
+  },
+  {
+   "report_id": "refferal_reports.r07",
+   "question": "Criteria meanings are inferred only: do the STATUSES radios Completed / Incomplete filter the Tx Status of the internal referral (the vendor's Referral Management grid shows Tx Status with exactly the values Incomplete / Completed), is Exclude Deleted Referrals the utility's Hide Deleted Referrals, and do USERS / SPECIALTY mean the creating user / the specialty of the referred-to provider?"
+  },
+  {
+   "report_id": "refferal_reports.r08",
+   "question": "Meaning of CONTACT STATUSES is unverified (presumably the latest contact-tracking entry made with the phone icon of the Referral Management grid). Likewise expected but not shown: the STATUSES checkboxes filter the Referral Status of the case (their eight labels match the vendor's status vocabulary) and Exclude Deleted Referrals leaves out deleted cases. No vendor description of this report exists."
+  },
+  {
+   "report_id": "",
+   "question": "Newer build: since 2026-11 referral sources can carry office-group associations (before that they were organisation-wide). Are the referral-source pickers of the report screens (REFERRAL OUT TO, REFERRED TO, REFERRED FROM) filtered by office then, and does Referral Source List still disable OFFICE/GROUP? Not stated."
+  },
+  {
+   "report_id": "",
+   "question": "Picker dialogs this document does not describe (it refers to legacy_report_outputs_daily_my.md for the picker dialogs): Referred From Provider, Referred To Provider / Reffered To Provider, Referred To, Referred From, Referral Out To, Users, Procedure Codes."
+  },
+  {
+   "report_id": "",
+   "question": "The Office / Office Group semantics and the UPDATE MY FAVORITES relabel are stated by the document as cross-cutting facts for the Appointment, Recall and Referral criteria screens and are recorded once, on Referral Production List. Confirm that they hold on every report screen of the category (on the management reports the section is titled REFERRED FROM / REFERRED TO OFFICE/GROUP)."
+  },
+  {
+   "report_id": "",
+   "question": "Rights: the vendor lists the security right Reports - Referral Reports Screen in two variants, Full Control and View Only (view only = see the report list and the parameters, cannot generate). How View Only shows on the criteria screen (PRINT / PREVIEW hidden or disabled?) is not described, so no rule is recorded. Referral cases themselves need the right Utilities - Referral Management Full Control; whether the three Referral Management reports also depend on it is not stated."
+  },
+  {
+   "report_id": "",
+   "question": "Vendor sources the research could not read and that may show the criteria of the three Referral Management reports (GROUP BY options, rows below STATUSES): the release-note articles (sign-in required) and the video-only webinars 23 Referrals, Labs, and Miscellaneous Helpful Features and 58 How to Send Internal & External Referrals."
+  }
+ ],
+ "supplement_source_document": "research/legacy_report_outputs_appointment_recall_referral.md",
+ "screenshot_control_count": 91,
+ "vendor_doc_control_count": 0
+}

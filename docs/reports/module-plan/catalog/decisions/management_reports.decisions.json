@@ -1,0 +1,117 @@
+{
+  "category": "management_reports",
+  "reports": {
+    "management_reports.r01": {
+      "report_key": "management.payment_plan_charges",
+      "phase": "P2"
+    },
+    "management_reports.r02": {
+      "report_key": "management.uncollected_copay",
+      "phase": "P2"
+    },
+    "management_reports.r03": {
+      "report_key": "management.audit_trail",
+      "phase": "P2",
+      "dynamic_rules": {
+        "management_reports.r03.d01": "Opened from the patient shell (patient Print launcher > Audit Trail, UX-29; the run request carries context.patient_id) the runner shows the compact dialog 'Audit Trail Report': audit_subject (visible_when and required_when ['ctx', 'patient_context'] - NEW run-context fact requested from 02 section 3.2; radios Account / Patient, no pre-selection) plus date_range (date_from / date_to). audit_subject = patient forces patient_ids to the token current_patient; audit_subject = account forces the hidden parameter account_id to the token current_account and lists the events of every member of that guarantor account. The other criteria are not shown in the dialog and keep their defaults, except office_scope, which the dialog sets to all (every office the caller may read; proposal - the legacy dialog has no office control). Opened from the hub (Reports > Management Reports) audit_subject is hidden (disabled_value null) and the full criteria panel is shown; patient_ids is then the optional PATIENT box."
+      }
+    },
+    "management_reports.r04": {
+      "report_key": "management.time_clock_report",
+      "phase": "P2"
+    }
+  },
+  "controls": {
+    "management_reports.r01.s02.c02": {
+      "notes": "108 = id of the office the user was working in. Office attribution on this report = contract office: rpt_contract_installments.office_id (office of the ortho contract or of the regular payment plan header), not the office of the posted charge. Offices (mode office) or office groups (mode office_group); tokens working_office, my_offices; all = every office the caller may read. Dialog content of SELECT was never captured."
+    },
+    "management_reports.r01.s03.c01": {
+      "notes": "Shared dictionary key report_date (04 section 3), role as_of, label override 'Billing Date'. Single date, default today in the office time zone (relative token). Meaning INFERRED (research: report twin of 'Show Periodic Charges as of' of Utilities > Generate Contract Charges): instalments whose due date is on or before the Billing Date and that are not yet posted (rpt_contract_installments.due_date <= :report_date AND NOT is_billed). Confirm on the live tool whether the legacy list is 'due on' or 'due as of' and whether posted instalments of the date are listed. Enhanced with presets and relative tokens.",
+      "param": "report_date",
+      "param_type": "date"
+    },
+    "management_reports.r01.s04.c01": {
+      "notes": "Regular -> rpt_contract_installments.contract_kind = 'regular' (patient_payment_plans instalments); Ortho -> contract_kind = 'ortho' (ortho_plans instalments of the three plan sides). Old menu name 'Regular Payment Plan Charges Report' = PLAN TYPE Regular."
+    },
+    "management_reports.r01.s05.c01": {
+      "notes": "Member patient of ortho_plan_parts -> plan_side = 'patient' (patient-portion periodic charges, list 'Post Patient Ortho Periodic Charges'). Greyed while PLAN TYPE = Regular; enabled for Ortho is inferred from our capture only. ortho_plan_parts is an enum_multi with min_items 0 and full_selection no_predicate: none ticked (legacy default) = every plan side, treated as no restriction until the live tool shows otherwise. While disabled the value is the disabled_value [] and has no effect."
+    },
+    "management_reports.r01.s05.c02": {
+      "notes": "Member primary of ortho_plan_parts -> plan_side = 'ins' (primary-insurance periodic charges, patient_ins_payment_plans, list 'Generate Ortho Primary Insurance Payment Plan Charges'). Greyed while PLAN TYPE = Regular; enabled for Ortho is inferred. None ticked = every plan side (no predicate)."
+    },
+    "management_reports.r01.s05.c03": {
+      "notes": "Member secondary of ortho_plan_parts -> plan_side = 'sec_ins' (secondary-insurance periodic charges, patient_sec_ins_payment_plans, list 'Generate Ortho Secondary Insurance Payment Plan Charges'). Greyed while PLAN TYPE = Regular; enabled for Ortho is inferred. None ticked = every plan side (no predicate)."
+    },
+    "management_reports.r02.s01.c01": {
+      "notes": "Detail = one row per scheduled patient with a patient balance above the threshold; Summary = one row per office and appointment day with the patient count and the uncollected totals. Both grains are INFERRED (vendor text documents only the per-patient content); confirm the Summary layout on the live tool."
+    },
+    "management_reports.r02.s03.c02": {
+      "notes": "108 = id of the office the user was working in. Office attribution on this report = appointment office (rpt_appointment_facts.office_id): the offices whose schedule is checked. The balance printed is the account balance across all offices (the patient owes it wherever it was charged). Tokens working_office, my_offices; all = every office the caller may read."
+    },
+    "management_reports.r02.s04.c01": {
+      "notes": "Date basis fixed: appointment_date (rpt_appointment_facts.appointment_date, office-local). Vendor text: every patient on the day's schedule with a patient balance due - which implies, but does not state, that the range selects by appointment date (supplement correction, likely). Default today, the vendor-recommended end-of-day run. Enhanced with presets and relative tokens."
+    },
+    "management_reports.r02.s04.c02": {
+      "notes": "Inclusive end of the appointment_date range (office-local). Default today. Enhanced with presets and relative tokens."
+    },
+    "management_reports.r02.s05.c01": {
+      "notes": "Shared dictionary key account_balance_over (04 section 3), label override 'Patient Balance Greater Than', default 0.00. Strictly greater than. Applied to the patient-responsible balance (Patient AR measure: open debits less credits, patient portion only) of the patient's current guarantor account as of the end of the appointment day of the row (balance_basis = appointment_day; run_time with the enhancement), from the canonical ledger (PD-2, PD-4); vendor text: 'a patient balance due - pre-existing or created that day'. Default 0.00 = every scheduled patient whose patient balance is above zero. Account level versus patient level is INFERRED (the report prints the account's last payment and financial notes): confirm on the live tool.",
+      "param": "account_balance_over",
+      "param_type": "decimal"
+    },
+    "management_reports.r03.s01.c02": {
+      "notes": "108 = id of the office the user was working in. Office attribution on this report = office of the audited change (rpt_audit_events.office_id: the working office of the request that made the change). PRINT rows and setup changes without an office have office_id NULL: they are listed for callers who may read all offices (member 'Unassigned office', data card 5.1 rule 3) and left out for office-restricted callers. Tokens working_office, my_offices; all = every office the caller may read."
+    },
+    "management_reports.r03.s02.c01": {
+      "notes": "User role on this report = the user who made the change (rpt_audit_events.user_id), echoed in the footer as 'User : ALL' by default. Legacy SELECT dialog becomes a searchable multi-select over every user, active and inactive; ALL = no restriction. Nothing predates the migration, so no legacy login strings occur in this dataset. Dialog content was never captured - confirm list source and inactive rows on the live tool."
+    },
+    "management_reports.r03.s03.c01": {
+      "notes": "Updated-date range (vendor sample footer From / Thru): rpt_audit_events.occurred_date, the office-local date of occurred_at_utc, not the original date of the changed record. Default today. Enhanced with presets and relative tokens."
+    },
+    "management_reports.r03.s03.c02": {
+      "notes": "Inclusive end of the updated-date range (office-local date of occurred_at_utc). Default today. Enhanced with presets and relative tokens."
+    },
+    "management_reports.r03.s04.c01": {
+      "notes": "Optional include filter on rpt_audit_events.patient_id; empty box (legacy default) = all patients, also the events that concern no patient (setup changes). 'Empty = all patients' comes from our capture only. Setting a value needs data class phi_identified (08 5.2 rule 8). Enhanced: a list of patients. From the patient Print launcher the value is forced by audit_subject (rule d01)."
+    },
+    "management_reports.r03.s05.c01": {
+      "notes": "Static dropdown captured collapsed: only the default ALL is known, and no vendor source gives the dropdown values. Vendor text lists the tracked actions: Edit, Delete, Close out, Reschedule Appointment, Cut/Copy - Paste Appointment. NEW report-specific enum key audit_type (owner 04 section 3, values from data card 2.27). Candidate option values: all (default), edit, delete, close_out, reschedule, cut_copy_paste, status_change, restore; all = audit_type IN (edit, delete, close_out, reschedule, cut_copy_paste, status_change, restore) (the legacy samples print status changes and re-activations), with appointment edit rows excluded (legacy records only delete, reschedule and cut / copy-paste of appointments). Additive values create and print are opt-in only: selected explicitly or added to all by the NEW boolean include_additive_audit_types (default false). On the live tool: expand the Audit Type list and record every label, its order and whether the list depends on Module Type."
+    },
+    "management_reports.r03.s05.c02": {
+      "status": "replicated_enhanced",
+      "param": "module_type",
+      "param_type": "enum",
+      "option_map": {
+        "Appointments": "appointments"
+      },
+      "default": "all",
+      "notes": "NEW report-specific enum key module_type (owner 04 section 3, values from data card 2.27). Filter on rpt_audit_events.module_type (resource_type mapped through rpt_value_map domain audit_module). ALL (default) = no module restriction. Appointments is vendor-documented (used to list deleted appointments: Description 'Delete Appointment-Created'); with Appointments and audit_type = all the population is audit_type IN (delete, reschedule, cut_copy_paste, status_change) - appointment edit and create rows appear only when that audit_type is selected explicitly. OPTION LIST INCOMPLETE: only ALL and Appointments of the legacy list are known; parity is not reached until the live list is read (RPT-MGMT-16). The values patient, setup, transactions, treatment_plan are the modules the vendor text names and the sample Type column shows: offered as enhancement until then. On the live tool: expand the Module Type list and record every label and its order."
+    },
+    "management_reports.r03.x01": {
+      "status": "replicated",
+      "param": "audit_subject",
+      "param_type": "enum",
+      "option_map": {
+        "Account": "account",
+        "Patient": "patient"
+      },
+      "default": "",
+      "notes": "Shared vendor-doc parameter of 04. Exists only in the compact dialog of the patient Print launcher (rule d01); hidden on the hub panel (disabled_value null). account = every member of the guarantor account of the patient in context (account_id = current_account); patient = the patient in context only (patient_ids = current_patient). The legacy default is not documented: the dialog pre-selects nothing and requires a choice until the live tool shows the default."
+    },
+    "management_reports.r04.s02.c02": {
+      "notes": "108 = id of the office the user was working in. Office attribution on this report = office of the punch (time_clock_entries.office_id), passed to time_clock_service.build_report as the resolved office list. Office predicate (NEW, owner 03 section 5.1): office_id IN (:offices) OR (office_id IS NULL AND user_id IN (users assigned to a selected office through user_offices)), so legacy punches (office_id NULL, 31,756 rows) are listed under every office selection that covers their user, banded 'Unassigned office', with the warning office_unknown_legacy. Vendor text: the office of a clock in / out is not tracked in the legacy tool, so the legacy filter may act on the user's office assignment - confirm on the live tool."
+    },
+    "management_reports.r04.s03.c01": {
+      "notes": "User role on this report = the employee of the punch (time_clock_entries.user_id). Legacy SELECT dialog becomes a searchable multi-select; ALL = no restriction. User restriction self_unless_privileged (08 UR-1, UR-2): a caller without data class payroll_time gets user_ids forced to current_user and the picker read-only; the run stores scope_user_ids = [caller]. Dialog content was never captured - confirm list source and inactive rows on the live tool."
+    },
+    "management_reports.r04.s05.c01": {
+      "notes": "Ticked sets group_by = office: an outer band per punch office with per-office totals. Greyed in the capture with one office in Office mode; enabled_when ctx.multi_office is inferred (vendor text does not state the rule). Vendor text says the office of a punch is not tracked, yet the Detail prints In Office / Out Office: punches with office_id NULL (legacy rows) band under 'Unassigned office'. Same mapping as My Reports > Time Clock Report (my_reports.r02.s05.c01)."
+    },
+    "management_reports.r04.s04.c01": {
+      "notes": "Date basis fixed: work_date (office-local date of clock_in; wall_clock legacy rows read as local). Inclusive; at most 366 days (MAX_REPORT_DAYS). Default today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    "management_reports.r04.s04.c02": {
+      "notes": "Inclusive end of the work_date range (office-local date of clock_in; wall_clock legacy rows read as local); at most 366 days from date_from (MAX_REPORT_DAYS). Default today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    }
+  }
+}

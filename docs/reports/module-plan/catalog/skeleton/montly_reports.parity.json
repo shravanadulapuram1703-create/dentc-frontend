@@ -1,0 +1,2862 @@
+{
+ "category": "montly_reports",
+ "reports": [
+  {
+   "report_id": "montly_reports.r01",
+   "legacy_name": "Executive Summary",
+   "report_key": "monthly.executive_summary",
+   "phase": "P2",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "montly_reports.r01.s01.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "montly_reports.r01.s01.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). Greyed (locked to the working office) on the four Ledger reports and display-only on Referral Source List. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    {
+     "control_id": "montly_reports.r01.s02.c01",
+     "signature_id": "sig0004",
+     "legacy_section": "PROVIDER",
+     "legacy_label": "Provider",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool. Provider role (line, appointment, preferred) is declared per report. Greyed on the two Aging reports until GROUP BY PROVIDER is ticked."
+    },
+    {
+     "control_id": "montly_reports.r01.s03.c01",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range; date_basis is fixed per report or chosen by the basis radio of the same section. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "montly_reports.r01.s03.c02",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range, inclusive end. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "montly_reports.r01.s04.c01",
+     "signature_id": "sig0046",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Show AR",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "show_ar",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Greyed on Daily Journal in every known capture (enabling rule unknown); enabled on Executive Summary."
+    },
+    {
+     "control_id": "montly_reports.r01.s05.c01",
+     "signature_id": "sig0095",
+     "legacy_section": "GROUP BY",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "None",
+      "Provider"
+     ],
+     "legacy_default": "None",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "group_by",
+     "param_type": "enum",
+     "option_map": {
+      "None": "none",
+      "Provider": "provider"
+     },
+     "default": "none",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Vendor screenshot: both radios are greyed on Outstanding Claims when PRINT FORMAT = Excel."
+    },
+    {
+     "control_id": "montly_reports.r01.s05.c02",
+     "signature_id": "sig0050",
+     "legacy_section": "GROUP BY",
+     "legacy_label": "Page Break",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "page_break_by.group",
+     "param_type": "enum",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "group_by == provider (inferred)",
+     "notes": "Page Break checkbox beside GROUP BY: ticked sets page_break_by = group (break on the selected grouping). Greyed while GROUP BY = None."
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r01.s01.c02",
+     "text": "Several or all offices can be chosen for one run: the vendor-recommended run is SELECT > `Select All` offices. `Select All` is the wording of the vendor's reporting guide; the dialog itself is not shown in the document, so its on-screen label may differ."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r01.s04.c01",
+     "text": "Show AR adds an A/R snapshot whose as-of date is the END of the report range (End Date); it matches the Aging report only when the Executive Summary is run for a single day."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r01.s04.c01",
+     "text": "Show AR is off by default (vendor text). Ticking it adds the `A/R as of` block to the report and the footer flag `* Show AR.`; without it no A/R figures print."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r01.s03.c02",
+     "text": "Start Date / End Date give the range for the counts and the money figures. The MTD and YTD blocks are derived from the End Date alone: MTD = first day of that month through the End Date, YTD = January 1 through the End Date."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r01.s02.c01",
+     "text": "The Provider picker limits the figures to the selected providers; the default ALL is echoed in the report footer as `Providers : ALL`."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r01.s01.c02",
+     "text": "One KPI block is printed per selected office, and the figures reflect the activity within that office."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r01.s01.c02",
+     "text": "Exception to the office rule: the new-patient counts follow the patient's preferred HOME office (from the patient record), not the office where the activity was recorded."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "montly_reports.r02",
+   "legacy_name": "Executive Day Sheet",
+   "report_key": "monthly.executive_day_sheet",
+   "phase": "P2",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "montly_reports.r02.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "montly_reports.r02.s02.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "montly_reports.r02.s02.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). Greyed (locked to the working office) on the four Ledger reports and display-only on Referral Source List. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    {
+     "control_id": "montly_reports.r02.s03.c01",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range; date_basis is fixed per report or chosen by the basis radio of the same section. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "montly_reports.r02.s03.c02",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range, inclusive end. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r02.s01.c01",
+     "text": "PRINT FORMAT = Excel downloads a spreadsheet instead of opening the PDF report viewer; Excel layouts are flat (one record per row). Cross-cutting statement of the document for every report with a PRINT FORMAT section - in this category Executive Day Sheet, both aging reports, Daily Journal Summary by Allocation and WaterFall Report - recorded once here. The vendor evidence it cites is for a Daily report and for the aging Excel output, not for this report."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "montly_reports.r03",
+   "legacy_name": "Aging Report by Home Office",
+   "report_key": "monthly.aging_report_by_home_office",
+   "phase": "P2",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "montly_reports.r03.s01.c01",
+     "signature_id": "sig0024",
+     "legacy_section": "REPORT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Detail",
+      "Summary"
+     ],
+     "legacy_default": "Detail",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "report_format",
+     "param_type": "enum",
+     "option_map": {
+      "Detail": "detail",
+      "Summary": "summary"
+     },
+     "default": "detail",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Greyed on 835 Denial Report while PRINT FORMAT = Excel (vendor documentation: Excel exists only as Detail). On the Daily Production Report the Detail option alone is greyed until PRODUCTION BY = Provider (option_enabled_when)."
+    },
+    {
+     "control_id": "montly_reports.r03.s02.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "montly_reports.r03.s03.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "montly_reports.r03.s03.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). Greyed (locked to the working office) on the four Ledger reports and display-only on Referral Source List. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    {
+     "control_id": "montly_reports.r03.s04.c01",
+     "signature_id": "sig0176",
+     "legacy_section": "PROVIDER",
+     "legacy_label": "GROUP BY PROVIDER",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "group_by.provider",
+     "param_type": "enum",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Ticked sets group_by = provider and enables the provider basis radio and the Provider picker."
+    },
+    {
+     "control_id": "montly_reports.r03.s04.c02",
+     "signature_id": "sig0177",
+     "legacy_section": "PROVIDER",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Preferred Provider",
+      "Transaction Provider"
+     ],
+     "legacy_default": "Preferred Provider",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "provider_basis",
+     "param_type": "enum",
+     "option_map": {
+      "Preferred Provider": "preferred_provider",
+      "Transaction Provider": "transaction_provider"
+     },
+     "default": "preferred_provider",
+     "default_differs_reason": "",
+     "enabled_when": "group_by == provider (inferred)",
+     "notes": "Greyed until GROUP BY PROVIDER is ticked."
+    },
+    {
+     "control_id": "montly_reports.r03.s04.c03",
+     "signature_id": "sig0004",
+     "legacy_section": "PROVIDER",
+     "legacy_label": "Provider",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "group_by == provider (inferred)",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool. Provider role (line, appointment, preferred) is declared per report. Greyed on the two Aging reports until GROUP BY PROVIDER is ticked."
+    },
+    {
+     "control_id": "montly_reports.r03.s05.c01",
+     "signature_id": "sig0040",
+     "legacy_section": "REPORT DATE",
+     "legacy_label": "Report Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "report_date",
+     "param_type": "date",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Single date. Role per report: as_of (Aging, Outstanding Claims), single_day (Peg Board Day Sheet; Claims Not Created, on the column chosen by date_basis, greyed while the radio is on ALL). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "montly_reports.r03.s06.c01",
+     "signature_id": "sig0042",
+     "legacy_section": "PATIENT TYPE",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Both",
+      "General",
+      "Ortho"
+     ],
+     "legacy_default": "Both",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "patient_type",
+     "param_type": "enum",
+     "option_map": {
+      "Both": "both",
+      "General": "general",
+      "Ortho": "ortho"
+     },
+     "default": "both",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Ortho-patient flag, not the user-defined patient types of INCLUDE / EXCLUDE PATIENT TYPE."
+    },
+    {
+     "control_id": "montly_reports.r03.s07.c01",
+     "signature_id": "sig0158",
+     "legacy_section": "RESPONSIBLE PARTY NAME RANGE",
+     "legacy_label": "Start Name",
+     "legacy_type": "text_input",
+     "legacy_options": [],
+     "legacy_default": "AAAAA",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "responsible_party_name_from",
+     "param_type": "text_range",
+     "option_map": {},
+     "default": "AAAAA",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Start of an alphabetical range on the responsible-party sort name (Last, First of the guarantor). AAAAA / ZZZZZ are the legacy open bounds. On Walkout Report both boxes are pre-filled from the patient in context (token current_responsible_party_name); whether the legacy tool writes the patient or the guarantor is to confirm with a dependent."
+    },
+    {
+     "control_id": "montly_reports.r03.s07.c02",
+     "signature_id": "sig0159",
+     "legacy_section": "RESPONSIBLE PARTY NAME RANGE",
+     "legacy_label": "SEARCH",
+     "legacy_type": "button",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "superseded",
+     "param": "responsible_party_name.search",
+     "param_type": "action",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Superseded by the lookup built into the bound control: typing searches (typeahead) and the search icon opens the full search dialog; no separate button."
+    },
+    {
+     "control_id": "montly_reports.r03.s07.c03",
+     "signature_id": "sig0160",
+     "legacy_section": "RESPONSIBLE PARTY NAME RANGE",
+     "legacy_label": "End Name",
+     "legacy_type": "text_input",
+     "legacy_options": [],
+     "legacy_default": "ZZZZZ",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "responsible_party_name_to",
+     "param_type": "text_range",
+     "option_map": {},
+     "default": "ZZZZZ",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "End of the range on the responsible-party sort name (inclusive, prefix rule)."
+    },
+    {
+     "control_id": "montly_reports.r03.s07.c04",
+     "signature_id": "sig0159",
+     "legacy_section": "RESPONSIBLE PARTY NAME RANGE",
+     "legacy_label": "SEARCH",
+     "legacy_type": "button",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "superseded",
+     "param": "responsible_party_name.search",
+     "param_type": "action",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Superseded by the lookup built into the bound control: typing searches (typeahead) and the search icon opens the full search dialog; no separate button."
+    },
+    {
+     "control_id": "montly_reports.r03.s08.c01",
+     "signature_id": "sig0008",
+     "legacy_section": "EXCLUDE RESP. PARTY TYPE",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "None",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "exclude_resp_party_type_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "none",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Exclude filter: None = exclude nothing; rows whose value is in the list are dropped. Dialog content was never captured - confirm on the live tool."
+    },
+    {
+     "control_id": "montly_reports.r03.s09.c01",
+     "signature_id": "sig0178",
+     "legacy_section": "AGING BY",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Account AR",
+      "Patient AR"
+     ],
+     "legacy_default": "Account AR",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "aging_by",
+     "param_type": "enum",
+     "option_map": {
+      "Account AR": "account_ar",
+      "Patient AR": "patient_ar"
+     },
+     "default": "account_ar",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Patient AR also renames the threshold to Patient Balance Over."
+    },
+    {
+     "control_id": "montly_reports.r03.s09.c02",
+     "signature_id": "sig0179",
+     "legacy_section": "AGING BY",
+     "legacy_label": "Account Balance Over",
+     "legacy_type": "number_input",
+     "legacy_options": [],
+     "legacy_default": "0.00",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "account_balance_over",
+     "param_type": "decimal",
+     "option_map": {},
+     "default": "0.00",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Balance > value."
+    },
+    {
+     "control_id": "montly_reports.r03.s10.c01",
+     "signature_id": "sig0180",
+     "legacy_section": "AGING",
+     "legacy_label": "SHOW ONLY CREDIT BALANCES",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "only_credit_balances",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Sits inside the AGING section header bar."
+    },
+    {
+     "control_id": "montly_reports.r03.s10.c02",
+     "signature_id": "sig0181",
+     "legacy_section": "AGING",
+     "legacy_label": "Current",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "aging_buckets.current",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Aging bucket checkbox. Vendor documentation: Excel output shows Over 120+ in place of Over 120."
+    },
+    {
+     "control_id": "montly_reports.r03.s10.c03",
+     "signature_id": "sig0182",
+     "legacy_section": "AGING",
+     "legacy_label": "Over 30",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "aging_buckets.over_30",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Aging bucket checkbox. Vendor documentation: Excel output shows Over 120+ in place of Over 120."
+    },
+    {
+     "control_id": "montly_reports.r03.s10.c04",
+     "signature_id": "sig0183",
+     "legacy_section": "AGING",
+     "legacy_label": "Over 60",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "aging_buckets.over_60",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Aging bucket checkbox. Vendor documentation: Excel output shows Over 120+ in place of Over 120."
+    },
+    {
+     "control_id": "montly_reports.r03.s10.c05",
+     "signature_id": "sig0184",
+     "legacy_section": "AGING",
+     "legacy_label": "Over 90",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "aging_buckets.over_90",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Aging bucket checkbox. Vendor documentation: Excel output shows Over 120+ in place of Over 120."
+    },
+    {
+     "control_id": "montly_reports.r03.s10.c06",
+     "signature_id": "sig0185",
+     "legacy_section": "AGING",
+     "legacy_label": "Over 120",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "aging_buckets.over_120",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Aging bucket checkbox. Vendor documentation: Excel output shows Over 120+ in place of Over 120."
+    },
+    {
+     "control_id": "montly_reports.r03.s10.c07",
+     "signature_id": "sig0186",
+     "legacy_section": "AGING",
+     "legacy_label": "Include Credit Balance",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_credit_balances",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "montly_reports.r03.s11.c01",
+     "signature_id": "sig0187",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Exclude patients sent to collection.",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "exclude_sent_to_collection",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "montly_reports.r03.s11.c02",
+     "signature_id": "sig0188",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Exclude accounts where patient portion is paid & insurance portion is expected.",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "exclude_insurance_expected_accounts",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "montly_reports.r03.s11.c03",
+     "signature_id": "sig0189",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include Balance Status",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_balance_status",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "montly_reports.r03.s11.c04",
+     "signature_id": "sig0190",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include Contract Balances",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_contract_balances",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "montly_reports.r03.s12.c01",
+     "signature_id": "sig0191",
+     "legacy_section": "SORT BY",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Resp. Party Last name [?]",
+      "Resp. Party ID [?]"
+     ],
+     "legacy_default": "Resp. Party Last name [?]",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "sort_by",
+     "param_type": "enum",
+     "option_map": {
+      "Resp. Party Last name [?]": "responsible_party_last_name",
+      "Resp. Party ID [?]": "responsible_party_id"
+     },
+     "default": "responsible_party_last_name",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Row clipped in our captures (labels read as best effort); vendor screenshots confirm both labels and that SORT BY is the last section. Re-check on the live tool."
+    },
+    {
+     "control_id": "montly_reports.r03.x01",
+     "signature_id": null,
+     "legacy_section": "AGING",
+     "legacy_label": "Over 120+",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "vendor_doc",
+     "vendor_doc_confidence": "confirmed",
+     "vendor_doc_evidence": "Excel = flat sheet; Excel also reveals the `Over 120+` checkbox (with an info icon) in place of `Over 120`",
+     "legacy_notes": "Appears only when PRINT FORMAT = Excel: it then stands in place of the `Over 120` bucket checkbox and carries an info icon (tooltip not documented). Our screenshot was taken with PRINT FORMAT = PDF and therefore shows `Over 120`. Excel-only option: the spreadsheet then carries Over 120 / Over 150 / Over 180 / Over 270 / Over 365 buckets. Default state not documented.",
+     "status": "TODO",
+     "param": "over_120",
+     "param_type": "",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "montly_reports.r03.d01",
+     "legacy_when": "PRINT FORMAT = Excel",
+     "legacy_effect": "In the AGING section the bucket checkbox `Over 120` is replaced by the checkbox `Over 120+` (with an info icon); with PRINT FORMAT = PDF the plain `Over 120` checkbox is shown.",
+     "confidence": "confirmed",
+     "new_behavior": ""
+    },
+    {
+     "rule_id": "montly_reports.r03.d02",
+     "legacy_when": "AGING BY = Patient AR",
+     "legacy_effect": "The threshold field `Account Balance Over` is relabelled `Patient Balance Over`; with AGING BY = Account AR the label is `Account Balance Over`.",
+     "confidence": "confirmed",
+     "new_behavior": ""
+    }
+   ],
+   "legacy_corrections": [
+    {
+     "about": "truncation",
+     "control_id": "montly_reports.r03.s12.c01",
+     "text": "SORT BY is the LAST section of the criteria panel and holds the two radios `Resp. Party Last name` / `Resp. Party ID`: vendor screenshots of the full aging criteria screen confirm both labels and that no section follows the row that our screenshot clips."
+    },
+    {
+     "about": "label",
+     "control_id": "montly_reports.r03.s12.c01",
+     "text": "The two clipped option labels are confirmed as read: `Resp. Party Last name` and `Resp. Party ID`. The [?] markers of the inventory can be dropped."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s03.c02",
+     "text": "On this report the selected office(s) are HOME offices: it lists the responsible parties whose home office is selected and considers all of their transactions wherever they were recorded."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s05.c01",
+     "text": "Report Date is the single as-of date of the ageing (not a range); ageing starts when a procedure is marked completed."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s07.c01",
+     "text": "Start Name / End Name are an alphabetical range on the responsible party LAST name."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s09.c01",
+     "text": "AGING BY = Account AR counts the insurance + patient balances on the account and can include balances that belong to another office (for example a dependant whose home office differs)."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s09.c01",
+     "text": "AGING BY = Patient AR counts only the patient balances for this office; accounts that only have an estimated insurance balance do not appear."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s10.c02",
+     "text": "The five bucket checkboxes (Current, Over 30, Over 60, Over 90, Over 120) are an ACCOUNT filter: they select the accounts that have a balance in a ticked bucket."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s10.c07",
+     "text": "Include Credit Balance adds the accounts whose total is negative; left unticked (the default) credits are left out and the grand total is higher than the real A/R."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s10.c01",
+     "text": "SHOW ONLY CREDIT BALANCES lists only the accounts with a negative total."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s11.c03",
+     "text": "Include Balance Status prints the account's Balance Status - a tenant-defined collections-stage note (10-character code + description) set with the Ledger's Balance Stat button and maintained in Setup > Misc Setups > Balance Status."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s11.c04",
+     "text": "Include Contract Balances adds the remaining payment-contract balances (regular / ortho contracts keep their balance off the ledger until the periodic charges post)."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s01.c01",
+     "text": "REPORT FORMAT: Detail = one block per account (responsible party); Summary = office totals - the vendor describes it as the A/R snapshot of the outstanding patient and insurance balances of each selected office."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s02.c01",
+     "text": "PRINT FORMAT = Excel downloads a flat spreadsheet (one record per row) instead of opening the PDF viewer, and the Excel layout can carry columns the PDF does not - here the extended buckets behind `Over 120+`."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s06.c01",
+     "text": "PATIENT TYPE restricts the report to general or to ortho patients (Both = no restriction); the choice is echoed in the report footer."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s08.c01",
+     "text": "EXCLUDE RESP. PARTY TYPE drops the accounts of the selected responsible-party types; the selection is echoed in the report footer as `Ex Resp Party Type`."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s11.c02",
+     "text": "This option drops the accounts whose remaining balance is expected entirely from insurance."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s10.c02",
+     "text": "Bucket boundaries in days, as the vendor defines them: Current = 0-29 (article) or 0-30 (glossary); Over 30 = 30 or 31 to 59; Over 60 = 60 or 61 to 89; Over 90 = 90 or 91 to 119; Over 120 = 120 and more, or more than 120. The vendor's two definitions differ by one day at the boundaries."
+    }
+   ],
+   "shared_rules": [
+    {
+     "param": "aging_buckets",
+     "field": "option_visible_when",
+     "when": "output_format == xlsx",
+     "value": "over_120_plus",
+     "evidence": "documented",
+     "note": "Excel shows Over 120+ (with an info icon) in place of Over 120."
+    },
+    {
+     "param": "aging_buckets",
+     "field": "option_visible_when",
+     "when": "output_format != xlsx",
+     "value": "over_120",
+     "evidence": "documented"
+    },
+    {
+     "param": "account_balance_over",
+     "field": "label_when",
+     "when": "aging_by == patient_ar",
+     "value": "Patient Balance Over",
+     "evidence": "documented",
+     "note": "Label of the threshold follows AGING BY."
+    }
+   ],
+   "shared_vendor_doc_parameters": [
+    {
+     "param": "aging_buckets.over_120_plus",
+     "param_type": "enum_multi",
+     "legacy_control": "AGING > Over 120+ (replaces Over 120 when PRINT FORMAT = Excel)",
+     "default": "not documented",
+     "evidence": "documented",
+     "kind": "vendor_doc",
+     "note": "Member over_120_plus: the spreadsheet then carries Over 120 / 150 / 180 / 270 / 365 buckets."
+    }
+   ]
+  },
+  {
+   "report_id": "montly_reports.r04",
+   "legacy_name": "Aging Report",
+   "report_key": "monthly.aging_report",
+   "phase": "P2",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "montly_reports.r04.s01.c01",
+     "signature_id": "sig0024",
+     "legacy_section": "REPORT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Detail",
+      "Summary"
+     ],
+     "legacy_default": "Detail",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "report_format",
+     "param_type": "enum",
+     "option_map": {
+      "Detail": "detail",
+      "Summary": "summary"
+     },
+     "default": "detail",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Greyed on 835 Denial Report while PRINT FORMAT = Excel (vendor documentation: Excel exists only as Detail). On the Daily Production Report the Detail option alone is greyed until PRODUCTION BY = Provider (option_enabled_when)."
+    },
+    {
+     "control_id": "montly_reports.r04.s02.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "montly_reports.r04.s03.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "montly_reports.r04.s03.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). Greyed (locked to the working office) on the four Ledger reports and display-only on Referral Source List. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    {
+     "control_id": "montly_reports.r04.s04.c01",
+     "signature_id": "sig0176",
+     "legacy_section": "PROVIDER",
+     "legacy_label": "GROUP BY PROVIDER",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "group_by.provider",
+     "param_type": "enum",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Ticked sets group_by = provider and enables the provider basis radio and the Provider picker."
+    },
+    {
+     "control_id": "montly_reports.r04.s04.c02",
+     "signature_id": "sig0177",
+     "legacy_section": "PROVIDER",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Preferred Provider",
+      "Transaction Provider"
+     ],
+     "legacy_default": "Preferred Provider",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "provider_basis",
+     "param_type": "enum",
+     "option_map": {
+      "Preferred Provider": "preferred_provider",
+      "Transaction Provider": "transaction_provider"
+     },
+     "default": "preferred_provider",
+     "default_differs_reason": "",
+     "enabled_when": "group_by == provider (inferred)",
+     "notes": "Greyed until GROUP BY PROVIDER is ticked."
+    },
+    {
+     "control_id": "montly_reports.r04.s04.c03",
+     "signature_id": "sig0004",
+     "legacy_section": "PROVIDER",
+     "legacy_label": "Provider",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "group_by == provider (inferred)",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool. Provider role (line, appointment, preferred) is declared per report. Greyed on the two Aging reports until GROUP BY PROVIDER is ticked."
+    },
+    {
+     "control_id": "montly_reports.r04.s05.c01",
+     "signature_id": "sig0040",
+     "legacy_section": "REPORT DATE",
+     "legacy_label": "Report Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "report_date",
+     "param_type": "date",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Single date. Role per report: as_of (Aging, Outstanding Claims), single_day (Peg Board Day Sheet; Claims Not Created, on the column chosen by date_basis, greyed while the radio is on ALL). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "montly_reports.r04.s06.c01",
+     "signature_id": "sig0042",
+     "legacy_section": "PATIENT TYPE",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Both",
+      "General",
+      "Ortho"
+     ],
+     "legacy_default": "Both",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "patient_type",
+     "param_type": "enum",
+     "option_map": {
+      "Both": "both",
+      "General": "general",
+      "Ortho": "ortho"
+     },
+     "default": "both",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Ortho-patient flag, not the user-defined patient types of INCLUDE / EXCLUDE PATIENT TYPE."
+    },
+    {
+     "control_id": "montly_reports.r04.s07.c01",
+     "signature_id": "sig0158",
+     "legacy_section": "RESPONSIBLE PARTY NAME RANGE",
+     "legacy_label": "Start Name",
+     "legacy_type": "text_input",
+     "legacy_options": [],
+     "legacy_default": "AAAAA",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "responsible_party_name_from",
+     "param_type": "text_range",
+     "option_map": {},
+     "default": "AAAAA",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Start of an alphabetical range on the responsible-party sort name (Last, First of the guarantor). AAAAA / ZZZZZ are the legacy open bounds. On Walkout Report both boxes are pre-filled from the patient in context (token current_responsible_party_name); whether the legacy tool writes the patient or the guarantor is to confirm with a dependent."
+    },
+    {
+     "control_id": "montly_reports.r04.s07.c02",
+     "signature_id": "sig0159",
+     "legacy_section": "RESPONSIBLE PARTY NAME RANGE",
+     "legacy_label": "SEARCH",
+     "legacy_type": "button",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "superseded",
+     "param": "responsible_party_name.search",
+     "param_type": "action",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Superseded by the lookup built into the bound control: typing searches (typeahead) and the search icon opens the full search dialog; no separate button."
+    },
+    {
+     "control_id": "montly_reports.r04.s07.c03",
+     "signature_id": "sig0160",
+     "legacy_section": "RESPONSIBLE PARTY NAME RANGE",
+     "legacy_label": "End Name",
+     "legacy_type": "text_input",
+     "legacy_options": [],
+     "legacy_default": "ZZZZZ",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "responsible_party_name_to",
+     "param_type": "text_range",
+     "option_map": {},
+     "default": "ZZZZZ",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "End of the range on the responsible-party sort name (inclusive, prefix rule)."
+    },
+    {
+     "control_id": "montly_reports.r04.s07.c04",
+     "signature_id": "sig0159",
+     "legacy_section": "RESPONSIBLE PARTY NAME RANGE",
+     "legacy_label": "SEARCH",
+     "legacy_type": "button",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "superseded",
+     "param": "responsible_party_name.search",
+     "param_type": "action",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Superseded by the lookup built into the bound control: typing searches (typeahead) and the search icon opens the full search dialog; no separate button."
+    },
+    {
+     "control_id": "montly_reports.r04.s08.c01",
+     "signature_id": "sig0008",
+     "legacy_section": "EXCLUDE RESP. PARTY TYPE",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "None",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "exclude_resp_party_type_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "none",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Exclude filter: None = exclude nothing; rows whose value is in the list are dropped. Dialog content was never captured - confirm on the live tool."
+    },
+    {
+     "control_id": "montly_reports.r04.s09.c01",
+     "signature_id": "sig0178",
+     "legacy_section": "AGING BY",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Account AR",
+      "Patient AR"
+     ],
+     "legacy_default": "Account AR",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "aging_by",
+     "param_type": "enum",
+     "option_map": {
+      "Account AR": "account_ar",
+      "Patient AR": "patient_ar"
+     },
+     "default": "account_ar",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Patient AR also renames the threshold to Patient Balance Over."
+    },
+    {
+     "control_id": "montly_reports.r04.s09.c02",
+     "signature_id": "sig0179",
+     "legacy_section": "AGING BY",
+     "legacy_label": "Account Balance Over",
+     "legacy_type": "number_input",
+     "legacy_options": [],
+     "legacy_default": "0.00",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "account_balance_over",
+     "param_type": "decimal",
+     "option_map": {},
+     "default": "0.00",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Balance > value."
+    },
+    {
+     "control_id": "montly_reports.r04.s10.c01",
+     "signature_id": "sig0180",
+     "legacy_section": "AGING",
+     "legacy_label": "SHOW ONLY CREDIT BALANCES",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "only_credit_balances",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Sits inside the AGING section header bar."
+    },
+    {
+     "control_id": "montly_reports.r04.s10.c02",
+     "signature_id": "sig0181",
+     "legacy_section": "AGING",
+     "legacy_label": "Current",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "aging_buckets.current",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Aging bucket checkbox. Vendor documentation: Excel output shows Over 120+ in place of Over 120."
+    },
+    {
+     "control_id": "montly_reports.r04.s10.c03",
+     "signature_id": "sig0182",
+     "legacy_section": "AGING",
+     "legacy_label": "Over 30",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "aging_buckets.over_30",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Aging bucket checkbox. Vendor documentation: Excel output shows Over 120+ in place of Over 120."
+    },
+    {
+     "control_id": "montly_reports.r04.s10.c04",
+     "signature_id": "sig0183",
+     "legacy_section": "AGING",
+     "legacy_label": "Over 60",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "aging_buckets.over_60",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Aging bucket checkbox. Vendor documentation: Excel output shows Over 120+ in place of Over 120."
+    },
+    {
+     "control_id": "montly_reports.r04.s10.c05",
+     "signature_id": "sig0184",
+     "legacy_section": "AGING",
+     "legacy_label": "Over 90",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "aging_buckets.over_90",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Aging bucket checkbox. Vendor documentation: Excel output shows Over 120+ in place of Over 120."
+    },
+    {
+     "control_id": "montly_reports.r04.s10.c06",
+     "signature_id": "sig0185",
+     "legacy_section": "AGING",
+     "legacy_label": "Over 120",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "aging_buckets.over_120",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Aging bucket checkbox. Vendor documentation: Excel output shows Over 120+ in place of Over 120."
+    },
+    {
+     "control_id": "montly_reports.r04.s10.c07",
+     "signature_id": "sig0186",
+     "legacy_section": "AGING",
+     "legacy_label": "Include Credit Balance",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_credit_balances",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "montly_reports.r04.s11.c01",
+     "signature_id": "sig0187",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Exclude patients sent to collection.",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "exclude_sent_to_collection",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "montly_reports.r04.s11.c02",
+     "signature_id": "sig0188",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Exclude accounts where patient portion is paid & insurance portion is expected.",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "exclude_insurance_expected_accounts",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "montly_reports.r04.s11.c03",
+     "signature_id": "sig0189",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include Balance Status",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_balance_status",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "montly_reports.r04.s11.c04",
+     "signature_id": "sig0190",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include Contract Balances",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_contract_balances",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "montly_reports.r04.s12.c01",
+     "signature_id": "sig0191",
+     "legacy_section": "SORT BY",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Resp. Party Last name [?]",
+      "Resp. Party ID [?]"
+     ],
+     "legacy_default": "Resp. Party Last name [?]",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "sort_by",
+     "param_type": "enum",
+     "option_map": {
+      "Resp. Party Last name [?]": "responsible_party_last_name",
+      "Resp. Party ID [?]": "responsible_party_id"
+     },
+     "default": "responsible_party_last_name",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Row clipped in our captures (labels read as best effort); vendor screenshots confirm both labels and that SORT BY is the last section. Re-check on the live tool."
+    },
+    {
+     "control_id": "montly_reports.r04.x01",
+     "signature_id": null,
+     "legacy_section": "AGING",
+     "legacy_label": "Over 120+",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "vendor_doc",
+     "vendor_doc_confidence": "likely",
+     "vendor_doc_evidence": "Excel = flat sheet; Excel also reveals the `Over 120+` checkbox (with an info icon) in place of `Over 120`",
+     "legacy_notes": "Appears only when PRINT FORMAT = Excel: it then stands in place of the `Over 120` bucket checkbox and carries an info icon (tooltip not documented). Our screenshot was taken with PRINT FORMAT = PDF and therefore shows `Over 120`. Excel-only option: the spreadsheet then carries Over 120 / Over 150 / Over 180 / Over 270 / Over 365 buckets. Default state not documented. Documented for the aging criteria panel in the Aging Report by Home Office section; the document states that the Aging Report panel is identical and that every option behaves the same.",
+     "status": "TODO",
+     "param": "over_120",
+     "param_type": "",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "montly_reports.r04.d01",
+     "legacy_when": "PRINT FORMAT = Excel",
+     "legacy_effect": "In the AGING section the bucket checkbox `Over 120` is replaced by the checkbox `Over 120+` (with an info icon); with PRINT FORMAT = PDF the plain `Over 120` checkbox is shown.",
+     "confidence": "likely",
+     "new_behavior": ""
+    },
+    {
+     "rule_id": "montly_reports.r04.d02",
+     "legacy_when": "AGING BY = Patient AR",
+     "legacy_effect": "The threshold field `Account Balance Over` is relabelled `Patient Balance Over`; with AGING BY = Account AR the label is `Account Balance Over`.",
+     "confidence": "confirmed",
+     "new_behavior": ""
+    }
+   ],
+   "legacy_corrections": [
+    {
+     "about": "truncation",
+     "control_id": "montly_reports.r04.s12.c01",
+     "text": "SORT BY is the LAST section of the criteria panel and holds the two radios `Resp. Party Last name` / `Resp. Party ID`: vendor screenshots of the full aging criteria screen confirm both labels and that no section follows the row that our screenshot clips. For this report the conclusion rests on its panel being pixel-identical to Aging Report by Home Office, under which the document reports the vendor screenshots."
+    },
+    {
+     "about": "label",
+     "control_id": "montly_reports.r04.s12.c01",
+     "text": "The two clipped option labels are confirmed as read: `Resp. Party Last name` and `Resp. Party ID`. The [?] markers of the inventory can be dropped."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s03.c02",
+     "text": "On this report the selected office(s) are TRANSACTION offices: only the transactions recorded in the selected office(s) are evaluated (unlike Aging Report by Home Office, which has the same criteria panel)."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s05.c01",
+     "text": "Report Date is the single as-of date of the ageing (not a range); ageing starts when a procedure is marked completed."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s07.c01",
+     "text": "Start Name / End Name are an alphabetical range on the responsible party LAST name."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s09.c01",
+     "text": "AGING BY = Account AR counts the insurance + patient balances on the account and can include balances that belong to another office (for example a dependant whose home office differs)."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s09.c01",
+     "text": "AGING BY = Patient AR counts only the patient balances for this office; accounts that only have an estimated insurance balance do not appear."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s10.c02",
+     "text": "The five bucket checkboxes (Current, Over 30, Over 60, Over 90, Over 120) are an ACCOUNT filter: they select the accounts that have a balance in a ticked bucket."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s10.c07",
+     "text": "Include Credit Balance adds the accounts whose total is negative; left unticked (the default) credits are left out and the grand total is higher than the real A/R."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s10.c01",
+     "text": "SHOW ONLY CREDIT BALANCES lists only the accounts with a negative total."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s11.c03",
+     "text": "Include Balance Status prints the account's Balance Status - a tenant-defined collections-stage note (10-character code + description) set with the Ledger's Balance Stat button and maintained in Setup > Misc Setups > Balance Status."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s11.c04",
+     "text": "Include Contract Balances adds the remaining payment-contract balances (regular / ortho contracts keep their balance off the ledger until the periodic charges post)."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s01.c01",
+     "text": "REPORT FORMAT: Detail = one block per account (responsible party); Summary = office totals - the vendor describes it as the A/R snapshot of the outstanding patient and insurance balances of each selected office."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s02.c01",
+     "text": "PRINT FORMAT = Excel downloads a flat spreadsheet (one record per row) instead of opening the PDF viewer, and the Excel layout can carry columns the PDF does not - here the extended buckets behind `Over 120+`. Documented for the aging criteria panel under Aging Report by Home Office; the document states that the Aging Report panel is identical and that every option behaves the same."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s06.c01",
+     "text": "PATIENT TYPE restricts the report to general or to ortho patients (Both = no restriction); the choice is echoed in the report footer. Documented for the aging criteria panel under Aging Report by Home Office; the document states that the Aging Report panel is identical and that every option behaves the same."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s08.c01",
+     "text": "EXCLUDE RESP. PARTY TYPE drops the accounts of the selected responsible-party types; the selection is echoed in the report footer as `Ex Resp Party Type`. Documented for the aging criteria panel under Aging Report by Home Office; the document states that the Aging Report panel is identical and that every option behaves the same."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s11.c02",
+     "text": "This option drops the accounts whose remaining balance is expected entirely from insurance. Documented for the aging criteria panel under Aging Report by Home Office; the document states that the Aging Report panel is identical and that every option behaves the same."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s10.c02",
+     "text": "Bucket boundaries in days, as the vendor defines them: Current = 0-29 (article) or 0-30 (glossary); Over 30 = 30 or 31 to 59; Over 60 = 60 or 61 to 89; Over 90 = 90 or 91 to 119; Over 120 = 120 and more, or more than 120. The vendor's two definitions differ by one day at the boundaries."
+    }
+   ],
+   "shared_rules": [
+    {
+     "param": "aging_buckets",
+     "field": "option_visible_when",
+     "when": "output_format == xlsx",
+     "value": "over_120_plus",
+     "evidence": "inferred",
+     "note": "Excel shows Over 120+ (with an info icon) in place of Over 120."
+    },
+    {
+     "param": "aging_buckets",
+     "field": "option_visible_when",
+     "when": "output_format != xlsx",
+     "value": "over_120",
+     "evidence": "inferred"
+    },
+    {
+     "param": "account_balance_over",
+     "field": "label_when",
+     "when": "aging_by == patient_ar",
+     "value": "Patient Balance Over",
+     "evidence": "documented",
+     "note": "Label of the threshold follows AGING BY."
+    }
+   ],
+   "shared_vendor_doc_parameters": [
+    {
+     "param": "aging_buckets.over_120_plus",
+     "param_type": "enum_multi",
+     "legacy_control": "AGING > Over 120+ (replaces Over 120 when PRINT FORMAT = Excel)",
+     "default": "not documented",
+     "evidence": "inferred",
+     "kind": "vendor_doc",
+     "note": "Inferred from the identical criteria panel of Aging Report by Home Office."
+    }
+   ]
+  },
+  {
+   "report_id": "montly_reports.r05",
+   "legacy_name": "Income Allocation",
+   "report_key": "monthly.income_allocation",
+   "phase": "P2",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "montly_reports.r05.s01.c01",
+     "signature_id": "sig0024",
+     "legacy_section": "REPORT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Detail",
+      "Summary"
+     ],
+     "legacy_default": "Detail",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "report_format",
+     "param_type": "enum",
+     "option_map": {
+      "Detail": "detail",
+      "Summary": "summary"
+     },
+     "default": "detail",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Greyed on 835 Denial Report while PRINT FORMAT = Excel (vendor documentation: Excel exists only as Detail). On the Daily Production Report the Detail option alone is greyed until PRODUCTION BY = Provider (option_enabled_when)."
+    },
+    {
+     "control_id": "montly_reports.r05.s02.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "montly_reports.r05.s02.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). Greyed (locked to the working office) on the four Ledger reports and display-only on Referral Source List. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    {
+     "control_id": "montly_reports.r05.s03.c01",
+     "signature_id": "sig0004",
+     "legacy_section": "PROVIDER",
+     "legacy_label": "Provider",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool. Provider role (line, appointment, preferred) is declared per report. Greyed on the two Aging reports until GROUP BY PROVIDER is ticked."
+    },
+    {
+     "control_id": "montly_reports.r05.s04.c01",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range; date_basis is fixed per report or chosen by the basis radio of the same section. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "montly_reports.r05.s04.c02",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range, inclusive end. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r05.s04.c01",
+     "text": "Start Date / End Date are matched against the CREATED (entry) date of the payment, not the editable transaction date: a payment entered Feb 1 and back-dated to Jan 15 appears in February."
+    },
+    {
+     "about": "default",
+     "control_id": "montly_reports.r05.s02.c02",
+     "text": "The office box defaults to the logged-in office; several offices or an office group can be selected for one run."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r05.s02.c02",
+     "text": "Money is credited to the office where the procedure was charged (the production / allocation office), not to the office where the payment was entered - so the selected offices are the offices where the treatment was charged."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r05.s01.c01",
+     "text": "REPORT FORMAT = Summary: one row per provider, then an Unallocated row and a Total row - the vendor's basis for collection-based provider pay."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r05.s01.c01",
+     "text": "REPORT FORMAT = Detail: the individual lines, each with its Pay Date, Allo Date (allocation date) and Proc Date; the vendor uses it to find back-dated payments and payments made outside the date range yet allocated inside it."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r05.s03.c01",
+     "text": "Provider here is the provider whose completed work the money was allocated to (the allocation provider), not the provider the payment was entered under."
+    },
+    {
+     "about": "other",
+     "control_id": "",
+     "text": "The absence of a PRINT FORMAT section is real (as captured): the output is exported from the report viewer instead."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "montly_reports.r06",
+   "legacy_name": "Allocation Detail",
+   "report_key": "monthly.allocation_detail",
+   "phase": "P2",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "montly_reports.r06.s01.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "montly_reports.r06.s01.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). Greyed (locked to the working office) on the four Ledger reports and display-only on Referral Source List. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    {
+     "control_id": "montly_reports.r06.s02.c01",
+     "signature_id": "sig0004",
+     "legacy_section": "PROVIDER",
+     "legacy_label": "Provider",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool. Provider role (line, appointment, preferred) is declared per report. Greyed on the two Aging reports until GROUP BY PROVIDER is ticked."
+    },
+    {
+     "control_id": "montly_reports.r06.s03.c01",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range; date_basis is fixed per report or chosen by the basis radio of the same section. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "montly_reports.r06.s03.c02",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range, inclusive end. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "montly_reports.r06.s04.c01",
+     "signature_id": "sig0062",
+     "legacy_section": "PAYMENT TYPES",
+     "legacy_label": "Cash",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "payment_types.cash",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Member of the payment type (tender category) checkbox group."
+    },
+    {
+     "control_id": "montly_reports.r06.s04.c02",
+     "signature_id": "sig0063",
+     "legacy_section": "PAYMENT TYPES",
+     "legacy_label": "Check",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "payment_types.check",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Member of the payment type (tender category) checkbox group."
+    },
+    {
+     "control_id": "montly_reports.r06.s04.c03",
+     "signature_id": "sig0064",
+     "legacy_section": "PAYMENT TYPES",
+     "legacy_label": "Credit Card",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "payment_types.credit_card",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Member of the payment type (tender category) checkbox group."
+    },
+    {
+     "control_id": "montly_reports.r06.s04.c04",
+     "signature_id": "sig0065",
+     "legacy_section": "PAYMENT TYPES",
+     "legacy_label": "CareCredit",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "payment_types.care_credit",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Member of the payment type (tender category) checkbox group."
+    },
+    {
+     "control_id": "montly_reports.r06.s04.c05",
+     "signature_id": "sig0066",
+     "legacy_section": "PAYMENT TYPES",
+     "legacy_label": "Direct Deposit",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "payment_types.direct_deposit",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Member of the payment type (tender category) checkbox group."
+    },
+    {
+     "control_id": "montly_reports.r06.s04.c06",
+     "signature_id": "sig0067",
+     "legacy_section": "PAYMENT TYPES",
+     "legacy_label": "Internal Financing",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "payment_types.internal_financing",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Member of the payment type (tender category) checkbox group."
+    },
+    {
+     "control_id": "montly_reports.r06.s05.c01",
+     "signature_id": "sig0048",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Show Datewise Summary",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "show_datewise_summary",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Same parameter as Show Datewise Distribution."
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r06.s03.c01",
+     "text": "The report covers money collected and entered in the date range that applies to completed procedures with payment due; an overpayment (prepayment) does not appear until it pays a completed procedure. Vendor text about the \"Allocation report\", which the document reads as the older name of this report."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r06.s03.c01",
+     "text": "Date basis of the allocation report family (Income Allocation / Allocation): the created (entry) date of the payment, not its editable transaction date."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r06.s02.c01",
+     "text": "Allocation reports attribute a payment to the office and the provider whose work it paid, not to the office / provider it was entered under (stated for the allocation reports as a family). That the OFFICE/GROUP and Provider selections of this report follow the same attribution is implied, not stated."
+    },
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r06.s04.c01",
+     "text": "The six PAYMENT TYPES checkboxes are tender classes; the document equates them with the tender classes of the daily Deposit Slip."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "montly_reports.r07",
+   "legacy_name": "Unallocated Payment/Adjustments",
+   "report_key": "monthly.unallocated_payment_adjustments",
+   "phase": "P2",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "montly_reports.r07.s01.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "montly_reports.r07.s01.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). Greyed (locked to the working office) on the four Ledger reports and display-only on Referral Source List. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    {
+     "control_id": "montly_reports.r07.s02.c01",
+     "signature_id": "sig0192",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Print all unallocated payment/adjustments as of today",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "print_all_unallocated_as_of_today",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "When ticked the date range is ignored (as-of snapshot) and both date boxes are disabled."
+    },
+    {
+     "control_id": "montly_reports.r07.s02.c02",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "print_all_unallocated_as_of_today == false (inferred)",
+     "notes": "Primary date range; date_basis is fixed per report or chosen by the basis radio of the same section. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "montly_reports.r07.s02.c03",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "print_all_unallocated_as_of_today == false (inferred)",
+     "notes": "Primary date range, inclusive end. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "montly_reports.r07.s03.c01",
+     "signature_id": "sig0193",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Exclude Credit Balances",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "exclude_credit_balances",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "montly_reports.r07.s03.c02",
+     "signature_id": "sig0194",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include Inactive Patients",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_inactive_patients",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r07.s03.c01",
+     "text": "Vendor text gives this report's parameters as a date range with credit balances optionally excluded - the option behind this checkbox. Which accounts count as credit balances here is only inferred (see unresolved)."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "montly_reports.r08",
+   "legacy_name": "Daily Journal Summary by Allocation",
+   "report_key": "monthly.daily_journal_summary_by_allocation",
+   "phase": "P2",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "montly_reports.r08.s01.c01",
+     "signature_id": "sig0024",
+     "legacy_section": "REPORT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Detail",
+      "Summary"
+     ],
+     "legacy_default": "Detail",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "report_format",
+     "param_type": "enum",
+     "option_map": {
+      "Detail": "detail",
+      "Summary": "summary"
+     },
+     "default": "detail",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Greyed on 835 Denial Report while PRINT FORMAT = Excel (vendor documentation: Excel exists only as Detail). On the Daily Production Report the Detail option alone is greyed until PRODUCTION BY = Provider (option_enabled_when)."
+    },
+    {
+     "control_id": "montly_reports.r08.s02.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "montly_reports.r08.s03.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "montly_reports.r08.s03.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). Greyed (locked to the working office) on the four Ledger reports and display-only on Referral Source List. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    {
+     "control_id": "montly_reports.r08.s04.c01",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range; date_basis is fixed per report or chosen by the basis radio of the same section. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "montly_reports.r08.s04.c02",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range, inclusive end. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "montly_reports.r09",
+   "legacy_name": "WaterFall Report",
+   "report_key": "monthly.waterfall_report",
+   "phase": "P2",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "montly_reports.r09.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "montly_reports.r09.s02.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "montly_reports.r09.s02.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). Greyed (locked to the working office) on the four Ledger reports and display-only on Referral Source List. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    {
+     "control_id": "montly_reports.r09.s03.c01",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range; date_basis is fixed per report or chosen by the basis radio of the same section. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "montly_reports.r09.s03.c02",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range, inclusive end. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "montly_reports.r09.s04.c01",
+     "signature_id": "sig0195",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Payments and Adjustments",
+      "Payments only",
+      "Adjustments only"
+     ],
+     "legacy_default": "Payments and Adjustments",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "payment_adjustment_scope",
+     "param_type": "enum",
+     "option_map": {
+      "Payments and Adjustments": "payments_and_adjustments",
+      "Payments only": "payments_only",
+      "Adjustments only": "adjustments_only"
+     },
+     "default": "payments_and_adjustments",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "montly_reports.r09.s03.c01",
+     "text": "Vendor guidance for the criteria: pick the office(s) and use a date range of at least one quarter; the report breaks collections down by the month of the date of service (`Service Date`) for the chosen range."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  }
+ ]
+}

@@ -1,0 +1,1764 @@
+{
+ "category": "appointment_reports",
+ "window_title": "Appointment Reports",
+ "report_list": [
+  "Appointment List",
+  "Missed Appointments Not Marked As Missed",
+  "New Patients via Appointments",
+  "Lab Report",
+  "SmartAssist Report Card",
+  "Appointments Confirmed Via Vendors",
+  "Appointment Time Stamps",
+  "Appointment Detail",
+  "Lab Cost Report"
+ ],
+ "reports_without_screenshot": [],
+ "observations": "Third-reader verified inventory: all 9 original screenshots and all pre-rendered zooms were re-read, every A-vs-B difference was settled on the pixels, and each file was swept for missed elements with a colour scan of the criteria area (nothing beyond the controls listed here was found). COVERAGE: all 9 files are the same two-panel screen in its normal state - no popup, no expanded dropdown, no second view of the same report; each screenshot shows a different report selected (blue radio dot located in each file), so all 9 listed reports are covered exactly once: 1=Appointment List, 2=Missed Appointments Not Marked As Missed, 3=New Patients via Appointments, 4=Lab Report, 5=SmartAssist Report Card, 6=Appointments Confirmed Via Vendors, 7=Appointment Time Stamps, 8=Appointment Detail, 9=Lab Cost Report. TITLE BAR (identical in all 9): 'Appointment Reports' at the left; 'PGID :2829 / OID :108' followed by a printer icon at the right. No footer text (only a thin grey window-edge strip below the panels). LEFT PANEL 'SELECT REPORT': 9 radio entries in a two-column grid (5 in the left column, 4 in the right, bottom-right cell empty); 'Missed Appointments Not Marked As Missed' wraps onto two lines; large empty area below - the list is not scrollable or clipped. Casing as displayed: 'New Patients via Appointments' (lower-case via) but 'Appointments Confirmed Via Vendors' (capital Via). A splitter handle (three dots) sits between the two panels. RIGHT PANEL 'REPORT CRITERIA': grey CLEAR CRITERIA button (refresh icon) at the right end of the blue panel bar - same grey look in all 9 files, so it is its normal style, not a disabled state; blue PRINT / PREVIEW (printer icon) and '+ ADD TO MY FAVORITES' buttons sit in a grey action bar pinned to the bottom of the panel. No static instruction / legend text anywhere in the criteria panels. NOT VISIBLE ANYWHERE in this category: the contents of the Office / Office Group / Provider / User / Operatory / Lab / Vendors / Cancellation Reason / Patient Type / Resp. Party Type pickers and the other values of the 'Length' dropdown (only 'Any' is shown); only one state per report was captured, so controls that depend on a radio or checkbox choice (the other five list types of Appointment List, the other Lab Report types, Only AppointNow Appointments ticked, GROUP BY = User, Include Cancelled Appointments ticked) are seen only in their default-state enabled/disabled form. RECURRING DEFAULTS: PRINT FORMAT = PDF (options PDF, Excel) on 8 of 9 reports - none visible on Appointment List; OFFICE/GROUP = Office (options Office, Office Group) with an unlabelled read-only box showing 108 (= OID) + SELECT on all 9; a Provider picker (ALL) on 7 reports (absent on New Patients via Appointments and Appointments Confirmed Via Vendors); User / Lab / Vendors / Operatory / Cancellation Reason pickers = ALL; EXCLUDE PATIENT TYPE + EXCLUDE RESP. PARTY TYPE pickers = None on Appointment List (greyed), Missed Appointments Not Marked As Missed, Lab Report and Lab Cost Report; every date box = 11/21/2026 (the capture date, i.e. today) with a calendar icon. SELECT button icons: building (Office, Lab, Vendors, Cancellation Reason), single person (Provider, Operatory), person-plus (User, Exclude Patient Type, Exclude Resp. Party Type). DISABLED-STATE EVIDENCE (pixel colours, not just by eye): disabled SELECT buttons are grey (176,183,190) instead of blue (41,134,220); disabled radio / checkbox labels are grey (161,161,161) instead of black; disabled inputs and dropdowns use the fill 220,223,226 of the read-only picker boxes instead of the 241,241,241 of enabled inputs (calibrated against the other report categories: about 35 dropdowns there use the light fill, the only other grey one is a dependency-gated Fee Schedule dropdown in My Reports). Greyed controls exist only in 1.PNG (Appointment List: both Exclude SELECT buttons, Cancellation Reason SELECT, Operatory SELECT, Length dropdown, Status Missed / Cancelled, Include Off Call List, all four SORT BY radios), 4.PNG (Lab Report: Due Date box) and 8.PNG (Appointment Detail: Both / Appoint Now / Appoint Now API radios, the 'User' option of PAGE BREAK BY, Cancellation Reason SELECT). TWO REPORTS DO NOT FIT THE VIEWPORT: the criteria viewport has a fixed height (482 px between the panel border and the action bar in every file) and no scrollbar is drawn even when the content is taller. (a) Appointment List (1.PNG) was captured scrolled to its bottom end - it is the only screenshot (also compared with the criteria screens of the other report categories) whose content does not start with a 1 px light line followed by a full 25 px header: its first header bar is cut to a 10 px strip without text, so that title is unreadable (it cannot even be told whether the bar carries a title), and no PRINT FORMAT section is visible; unknown whether the report has none or it is hidden above. (b) Appointment Detail (8.PNG) is clipped at the BOTTOM: a third row under OTHER OPTIONS begins exactly at the edge (1 px sliver). Both need verification on the live system; the other seven reports end with empty panel space below their last section and are complete. FONT CAVEAT: in the bold caps section-header font the G is drawn almost like a C at this size, so the headers look like 'OFFICE/CROUP', 'DATE RANCE', 'APPOINTMENT DATE RANCE', 'CROUP BY', 'PACE BREAK BY'; a pixel comparison with real C glyphs (e.g. in CANCELLATION) shows the extra lower-right stroke of a G, so they are transcribed as OFFICE/GROUP, DATE RANGE, APPOINTMENT DATE RANGE, GROUP BY, PAGE BREAK BY. NAMING DIFFERENCES worth keeping: the date section is 'DATE RANGE' on six reports but 'APPOINTMENT DATE RANGE' on Lab Report, SmartAssist Report Card and Lab Cost Report; 'PROVIDER' vs 'PROVIDER/USER' (Appointment Detail only); the first-row selector is titled 'REPORT TYPE' (Lab Report, Lab Cost Report), 'REPORT FORMAT' (SmartAssist Report Card) or 'APPOINTMENT TYPE' (Appointment Detail: Regular / Archived), while on Appointment List 'APPOINTMENT TYPE' is a different section (Length dropdown + Status checkboxes); header 'APPOINT NOW' is two words whereas its checkbox says 'AppointNow'; the balance option is worded 'Include Patient Balance' on Appointment List but 'Show Patient Balance' on Missed Appointments Not Marked As Missed (both ticked by default). Not part of this category's 9 files: the parent folder also holds drop_down_options.PNG (the Reports menu), not transcribed here.",
+ "report_count": 9,
+ "control_count": 93,
+ "reports": [
+  {
+   "report_id": "appointment_reports.r01",
+   "name": "Appointment List",
+   "screenshots": [
+    "1.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Only 1.PNG shows this report; state = 'Confirmation Call List' selected (the other five list types were not captured, so their enabled/disabled combinations are unknown). THE CLIPPING IS AT THE TOP, NOT THE BOTTOM: the criteria area was captured scrolled to its bottom end. Directly under the panel border there is only a 10 px strip of a full-width header bar (normal bars are 24-25 px) and the 1 px light line that tops the criteria content in every other screenshot is missing, i.e. the content sits about 16 px higher than normal while its last line ends exactly at the action bar. Consequences: (a) the title of the first section (the list-type radios) cannot be read - recorded as [?]; (b) it cannot be ruled out that more content lies above it. NO 'PRINT FORMAT' (PDF / Excel) section is visible for this report although the other 8 reports of the category have one - the pixels do not tell whether it does not exist here or is scrolled out of view above; verify on the live screen. The bottom edge is complete: SORT BY is the last section, followed by the closing 1 px line and the action bar. Layout top to bottom: [clipped full-width header] + list-type radios (full width); OFFICE/GROUP | PROVIDER; DATE RANGE (full width); EXCLUDE PATIENT TYPE | EXCLUDE RESP. PARTY TYPE; CANCELLATION REASON | OPERATORY; APPOINTMENT TYPE (full-width header: Length on the left half, Status checkboxes on the right half); OTHER OPTIONS (full-width header: one checkbox in each half); SORT BY (full width). GREYED OUT in this state: SELECT buttons of EXCLUDE PATIENT TYPE, EXCLUDE RESP. PARTY TYPE, CANCELLATION REASON and OPERATORY; Length dropdown; Status checkboxes Missed and Cancelled; Include Off Call List; all four SORT BY radios. ENABLED: list-type radios, Office / Office Group + office SELECT, Provider SELECT, Start Date / End Date, Include Patient Balance (checked). Presumably the other list types enable other subsets (e.g. Cancellation Reason for Cancelled List) - inference only, not shown.",
+   "controls": [
+    {
+     "control_id": "appointment_reports.r01.s01.c01",
+     "section": "[?]",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Confirmation Call List",
+      "Call List",
+      "Pull Chart List",
+      "Cancelled List",
+      "Cancelled From Automated Campaigns",
+      "Missed List"
+     ],
+     "default_value": "Confirmation Call List",
+     "enabled": true,
+     "notes": "List-type selector: one full-width row of six radios, all enabled (black labels). SECTION TITLE NOT READABLE (recorded as [?]): of the header bar above this row only the bottom 10 px strip is visible directly under the panel border (normal header bars are 24-25 px); the strip is full width, has no column divider and contains no text, so the title - if this header has one - is hidden above the viewport edge. Nothing was invented; for orientation only, the analogous selectors of Lab Report and Lab Cost Report are titled REPORT TYPE, but no such text is visible here. The selection evidently drives which criteria below are enabled (inference: only the 'Confirmation Call List' state was captured)."
+    },
+    {
+     "control_id": "appointment_reports.r01.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left column (PROVIDER section is to its right). No row label."
+    },
+    {
+     "control_id": "appointment_reports.r01.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button with building icon. 108 = current office id (same as OID :108 in the title bar)."
+    },
+    {
+     "control_id": "appointment_reports.r01.s03.c01",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right column. Read-only grey box; blue SELECT button with single-person icon. The second row of this column is an empty filler row."
+    },
+    {
+     "control_id": "appointment_reports.r01.s04.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Full-width section. MM/DD/YYYY box with a calendar icon at its right end; the value equals the capture date (appears to default to today)."
+    },
+    {
+     "control_id": "appointment_reports.r01.s04.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon at the right end of the box; same default as Start Date."
+    },
+    {
+     "control_id": "appointment_reports.r01.s05.c01",
+     "section": "EXCLUDE PATIENT TYPE",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "None",
+     "enabled": false,
+     "notes": "Left column. Unlabelled read-only box showing None; its SELECT button (person-plus icon) is GREYED OUT / disabled in this state (Confirmation Call List selected)."
+    },
+    {
+     "control_id": "appointment_reports.r01.s06.c01",
+     "section": "EXCLUDE RESP. PARTY TYPE",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "None",
+     "enabled": false,
+     "notes": "Right column. Unlabelled read-only box showing None; its SELECT button (person-plus icon) is GREYED OUT / disabled in this state."
+    },
+    {
+     "control_id": "appointment_reports.r01.s07.c01",
+     "section": "CANCELLATION REASON",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": false,
+     "notes": "Left column. Unlabelled read-only box showing ALL; its SELECT button (building icon) is GREYED OUT / disabled in this state."
+    },
+    {
+     "control_id": "appointment_reports.r01.s08.c01",
+     "section": "OPERATORY",
+     "label": "Operatory",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": false,
+     "notes": "Right column. Read-only box showing ALL; its SELECT button (single-person icon) is GREYED OUT / disabled in this state."
+    },
+    {
+     "control_id": "appointment_reports.r01.s09.c01",
+     "section": "APPOINTMENT TYPE",
+     "label": "Length",
+     "type": "dropdown",
+     "options": [],
+     "default_value": "Any",
+     "enabled": false,
+     "notes": "Left half of the row under the full-width header. List collapsed - other values not visible. Drawn in the disabled style: fill RGB 220,223,226 with border 209,209,209, identical to the read-only picker boxes, whereas enabled inputs here and enabled dropdowns elsewhere in the tool (checked against the Referral Reports screenshots) use the lighter 241,241,241 fill. The 'Length' label, the value text and the chevron are not dimmed."
+    },
+    {
+     "control_id": "appointment_reports.r01.s09.c02",
+     "section": "APPOINTMENT TYPE",
+     "label": "Missed",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": false,
+     "notes": "Right half of the same row, after the black row label 'Status'. Checkbox and label greyed out / disabled in this state."
+    },
+    {
+     "control_id": "appointment_reports.r01.s09.c03",
+     "section": "APPOINTMENT TYPE",
+     "label": "Cancelled",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": false,
+     "notes": "Right half of the same row (row label 'Status'), immediately right of Missed. Checkbox and label greyed out / disabled in this state."
+    },
+    {
+     "control_id": "appointment_reports.r01.s10.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Include Off Call List",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": false,
+     "notes": "Left half of the row under the full-width header. Checkbox and label greyed out / disabled in this state."
+    },
+    {
+     "control_id": "appointment_reports.r01.s10.c02",
+     "section": "OTHER OPTIONS",
+     "label": "Include Patient Balance",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Right half of the same row. Enabled and ticked (blue check)."
+    },
+    {
+     "control_id": "appointment_reports.r01.s11.c01",
+     "section": "SORT BY",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Appointment Date",
+      "Provider (Last Name) – Appointment Date",
+      "Patient Chart#",
+      "Patient Last Name"
+     ],
+     "default_value": "Appointment Date",
+     "enabled": false,
+     "notes": "Full-width single row. ALL FOUR radios and their labels are greyed out / disabled in this state; 'Appointment Date' shows a grey filled dot (selected but disabled). The dash in the 2nd option is about 5 px wide with a space on each side - read as an en dash, could be a plain hyphen. 'Patient Chart#' has no space before #."
+    },
+    {
+     "control_id": "appointment_reports.r01.x01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Hidden ABOVE the captured area: our screenshot of Appointment List was taken scrolled to the bottom of the criteria panel, so the top of the panel is cut off. Vendor screenshots of this criteria screen show the section. The default is not stated for this report (the other eight reports of the category show PDF selected in our captures). Whether it sits above or beside REPORT FORMAT TO PRINT is not stated. The document also states, as a cross-cutting fact backed by vendor criteria screenshots, that every report of the Appointment, Recall and Referral categories has PRINT FORMAT (PDF / Excel).",
+     "origin": "vendor_doc",
+     "confidence": "confirmed",
+     "options_unknown": false,
+     "evidence_quote": "The area clipped at the top holds `PRINT FORMAT` (`PDF` / `Excel`) and the header of the six radios is `REPORT FORMAT TO PRINT`.",
+     "source_document": "research/legacy_report_outputs_appointment_recall_referral.md"
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "appointment_reports.r01.d01",
+     "when": "REPORT FORMAT TO PRINT = Confirmation Call List (the state of our capture)",
+     "effect": "Of the filter criteria only the office (OFFICE/GROUP), PROVIDER, the DATE RANGE dates and Include Patient Balance are enabled. Everything else is greyed - the EXCLUDE PATIENT TYPE, EXCLUDE RESP. PARTY TYPE, CANCELLATION REASON and OPERATORY pickers, the Length dropdown, the Status checkboxes Missed / Cancelled, Include Off Call List and all four SORT BY radios (the greyed set recorded in our capture).",
+     "controls": [
+      "appointment_reports.r01.s01.c01",
+      "appointment_reports.r01.s02.c01",
+      "appointment_reports.r01.s02.c02",
+      "appointment_reports.r01.s03.c01",
+      "appointment_reports.r01.s04.c01",
+      "appointment_reports.r01.s04.c02",
+      "appointment_reports.r01.s10.c02",
+      "appointment_reports.r01.s05.c01",
+      "appointment_reports.r01.s06.c01",
+      "appointment_reports.r01.s07.c01",
+      "appointment_reports.r01.s08.c01",
+      "appointment_reports.r01.s09.c01",
+      "appointment_reports.r01.s09.c02",
+      "appointment_reports.r01.s09.c03",
+      "appointment_reports.r01.s10.c01",
+      "appointment_reports.r01.s11.c01"
+     ],
+     "confidence": "confirmed",
+     "evidence_quote": "With `Confirmation Call List`: only office, provider, dates and `Include Patient Balance` are enabled."
+    },
+    {
+     "rule_id": "appointment_reports.r01.d02",
+     "when": "REPORT FORMAT TO PRINT = Cancelled List",
+     "effect": "EXCLUDE PATIENT TYPE, EXCLUDE RESP. PARTY TYPE, CANCELLATION REASON and Include Off Call List become enabled; OPERATORY and the Status checkboxes (Missed / Cancelled) stay disabled and Length appears disabled. The states of SORT BY and Include Patient Balance in this mode are not stated.",
+     "controls": [
+      "appointment_reports.r01.s01.c01",
+      "appointment_reports.r01.s05.c01",
+      "appointment_reports.r01.s06.c01",
+      "appointment_reports.r01.s07.c01",
+      "appointment_reports.r01.s10.c01",
+      "appointment_reports.r01.s08.c01",
+      "appointment_reports.r01.s09.c01",
+      "appointment_reports.r01.s09.c02",
+      "appointment_reports.r01.s09.c03"
+     ],
+     "confidence": "confirmed",
+     "evidence_quote": "With `Cancelled List` selected: `EXCLUDE PATIENT TYPE`, `EXCLUDE RESP. PARTY TYPE`, `CANCELLATION REASON`, `Include Off Call List` enabled; `OPERATORY`, `Length`, `Status` disabled."
+    },
+    {
+     "rule_id": "appointment_reports.r01.d03",
+     "when": "OFFICE/GROUP = Office Group",
+     "effect": "The SELECT picker chooses office groups defined in setup instead of offices; with Office it chooses one or more offices. Cross-cutting statement of the document for the Appointment, Recall and Referral criteria screens - recorded once here (Appointment List); it applies to every report of this category that has the Office / Office Group radios.",
+     "controls": [
+      "appointment_reports.r01.s02.c01",
+      "appointment_reports.r01.s02.c02"
+     ],
+     "confidence": "likely",
+     "evidence_quote": "`Office` = one or more offices; `Office Group` = groups from setup."
+    },
+    {
+     "rule_id": "appointment_reports.r01.d04",
+     "when": "A favorite has already been saved for the report (the legacy tool keeps one saved version per report)",
+     "effect": "The action button ADD TO MY FAVORITES reads UPDATE MY FAVORITES. Cross-cutting statement of the document for the Appointment, Recall and Referral criteria screens - recorded once here (Appointment List); it applies to every report of this category. Whether the relabel shows only when the screen is opened from My Favorites is not stated.",
+     "controls": [],
+     "confidence": "likely",
+     "evidence_quote": "One saved version per report (`ADD TO MY FAVORITES` → `UPDATE MY FAVORITES`)."
+    }
+   ],
+   "possibly_truncated_screenshot": true,
+   "corrections": [
+    {
+     "correction_id": "appointment_reports.r01.k01",
+     "about": "label",
+     "control_id": "appointment_reports.r01.s01.c01",
+     "text": "The section title that our capture cuts off above the six list-format radios is REPORT FORMAT TO PRINT - it replaces the [?] of the inventory.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "the header of the six radios is `REPORT FORMAT TO PRINT`"
+    },
+    {
+     "correction_id": "appointment_reports.r01.k02",
+     "about": "truncation",
+     "control_id": "",
+     "text": "The capture is clipped at the TOP only. The hidden area holds the PRINT FORMAT section (PDF / Excel, see added_controls) and the title REPORT FORMAT TO PRINT of the list-format radios; the document names nothing else there, and the bottom of the panel (SORT BY) is complete in our capture. With PRINT FORMAT added the criteria panel is fully known.",
+     "resolves_truncation": true,
+     "confidence": "confirmed",
+     "evidence_quote": "The area clipped at the top holds `PRINT FORMAT` (`PDF` / `Excel`) and the header of the six radios is `REPORT FORMAT TO PRINT`."
+    },
+    {
+     "correction_id": "appointment_reports.r01.k03",
+     "about": "label",
+     "control_id": "appointment_reports.r01.s01.c01",
+     "text": "The fifth radio is confirmed as read: Cancelled From Automated Campaigns (vendor screenshot of May 2024). In June 2023 the same radio was labelled Cancelled From Denticon Patient Engagement - an older-build label of the same option, not a further option.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Fifth radio was `Cancelled From Denticon Patient Engagement` in June 2023 and `Cancelled From Automated Campaigns` from May 2024."
+    },
+    {
+     "correction_id": "appointment_reports.r01.k04",
+     "about": "meaning",
+     "control_id": "appointment_reports.r01.s01.c01",
+     "text": "Cancelled List and Missed List are history lists - they ignore whether a replacement appointment exists. Call List is the work list: with default parameters it leaves out the appointments that were replaced or taken off the call list.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Cancelled List` and `Missed List` are history; `Call List` is the work list"
+    },
+    {
+     "correction_id": "appointment_reports.r01.k05",
+     "about": "default",
+     "control_id": "appointment_reports.r01.s04.c01",
+     "text": "DATE RANGE (Start Date / End Date) is matched on the appointment date and defaults to today - the 11/21/2026 of our capture is the capture day, not a fixed default.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`DATE RANGE` | Appointment date; defaults to today."
+    },
+    {
+     "correction_id": "appointment_reports.r01.k06",
+     "about": "meaning",
+     "control_id": "appointment_reports.r01.s07.c01",
+     "text": "CANCELLATION REASON limits the cancelled appointments to the chosen cancellation reasons - the system reasons and the ones the office defined.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`CANCELLATION REASON` | Limits cancelled appointments to chosen reasons (system and office-defined)."
+    },
+    {
+     "correction_id": "appointment_reports.r01.k07",
+     "about": "meaning",
+     "control_id": "appointment_reports.r01.s01.c01",
+     "text": "Cancelled From Automated Campaigns lists the appointments that the patient cancelled through an automated campaign message.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Appointments cancelled by the patient through an automated campaign message"
+    },
+    {
+     "correction_id": "appointment_reports.r01.k08",
+     "about": "meaning",
+     "control_id": "appointment_reports.r01.s10.c01",
+     "text": "Off call list = call-list entries that a user took off the list by ticking Off List (an entry also leaves the call list when it is rescheduled or when a new appointment is made; a removed entry can be restored). What exactly the checkbox adds to each list format is not stated beyond its name.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "An entry leaves the list when rescheduled, when a new appointment is made, or when a user ticks `Off List`; it can be restored."
+    },
+    {
+     "correction_id": "appointment_reports.r01.k09",
+     "about": "meaning",
+     "control_id": "appointment_reports.r01.s09.c01",
+     "text": "Length, the Status checkboxes Missed / Cancelled and Include Off Call List mirror the filters of the Scheduler's Call List screen - Select Duration (mins), Show Missed, Show Cancelled, Show Off Call List. Length is therefore an appointment-duration filter in minutes; its values other than Any are not documented (see unresolved).",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "Mirror the Scheduler `Call List` screen filters `Select Duration (mins)`, `Show Missed`, `Show Cancelled`, `Show Off Call List`"
+    },
+    {
+     "correction_id": "appointment_reports.r01.k10",
+     "about": "meaning",
+     "control_id": "appointment_reports.r01.s01.c01",
+     "text": "Confirmation Call List is the working list for confirmation calls, for one date or a date range.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Working list for confirmation calls for a date or range"
+    },
+    {
+     "correction_id": "appointment_reports.r01.k11",
+     "about": "meaning",
+     "control_id": "appointment_reports.r01.s01.c01",
+     "text": "Call List is the former menu report Appointment Call List: the missed or cancelled appointments that still have no replacement.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`Call List` | old menu name `Appointment Call List` `[P27]` | Missed or cancelled appointments that still have no replacement"
+    },
+    {
+     "correction_id": "appointment_reports.r01.k12",
+     "about": "meaning",
+     "control_id": "appointment_reports.r01.s01.c01",
+     "text": "Pull Chart List is the former menu report Appointment Pull Chart List: the \"patients for the day\" list used for pulling charts.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`Pull Chart List` | old menu name `Appointment Pull Chart List` `[P27]` | \"Patients for the day\" list for pulling charts"
+    },
+    {
+     "correction_id": "appointment_reports.r01.k13",
+     "about": "meaning",
+     "control_id": "appointment_reports.r01.s01.c01",
+     "text": "Cancelled List is the former menu report Appt Cancellation List / Appointment Cancellation List.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`Appt Cancellation List` / `Appointment Cancellation List` | `Appointment List` → `Cancelled List`"
+    },
+    {
+     "correction_id": "appointment_reports.r01.k14",
+     "about": "meaning",
+     "control_id": "appointment_reports.r01.s01.c01",
+     "text": "Missed List is the former menu report Missed Appointment List: the history of the appointments marked missed.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`Missed List` | old menu name `Missed Appointment List` `[P27]` | History of appointments marked missed"
+    },
+    {
+     "correction_id": "appointment_reports.r01.k15",
+     "about": "meaning",
+     "control_id": "appointment_reports.r01.s01.c01",
+     "text": "Vendor guides still call the Cancelled From Automated Campaigns format by its old name, Appointment Cancellation Report From Denticon Patient Communication / Engagement.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`Appointment Cancellation Report From Denticon Patient Communication / Engagement` | `Appointment List` → `Cancelled From Automated Campaigns`"
+    },
+    {
+     "correction_id": "appointment_reports.r01.k16",
+     "about": "meaning",
+     "control_id": "appointment_reports.r01.s10.c02",
+     "text": "Include Patient Balance prints the patient balance on the list - shown as Curr Bal on the Cancelled List and as Bal: on the campaign-cancellation format. (Whether the checkbox is enabled for those two formats is not stated - see unresolved.)",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Include Patient Balance` | Prints the balance (`Curr Bal` / `Bal:`)."
+    },
+    {
+     "correction_id": "appointment_reports.r01.k17",
+     "about": "other",
+     "control_id": "",
+     "text": "Hidden population rule with no criteria control: a deleted appointment leaves no trace in any appointment report (it exists only in the Audit Trail) - unlike a cancelled appointment, which is removed from the schedule but kept in the appointment history and on the call list. Category-wide statement, recorded once here (Appointment List); it applies to every report of this category.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "A **deleted** appointment leaves no trace in any appointment report (only the Audit Trail)."
+    }
+   ]
+  },
+  {
+   "report_id": "appointment_reports.r02",
+   "name": "Missed Appointments Not Marked As Missed",
+   "screenshots": [
+    "2.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Only 2.PNG shows this report (default state). Layout: PRINT FORMAT (full width); OFFICE/GROUP | PROVIDER; DATE RANGE (full width); EXCLUDE PATIENT TYPE | EXCLUDE RESP. PARTY TYPE; OTHER OPTIONS (full width). Nothing greyed out. Large empty area between the last section and the action bar - content fully visible.",
+   "controls": [
+    {
+     "control_id": "appointment_reports.r02.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Full-width section (first row of the panel)."
+    },
+    {
+     "control_id": "appointment_reports.r02.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left column (PROVIDER section is to its right). No row label."
+    },
+    {
+     "control_id": "appointment_reports.r02.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button with building icon. 108 = OID in the title bar."
+    },
+    {
+     "control_id": "appointment_reports.r02.s03.c01",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right column. Read-only grey box; blue SELECT button with single-person icon."
+    },
+    {
+     "control_id": "appointment_reports.r02.s04.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Full-width section. Calendar icon at the right end of the box; value = capture date."
+    },
+    {
+     "control_id": "appointment_reports.r02.s04.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon at the right end of the box."
+    },
+    {
+     "control_id": "appointment_reports.r02.s05.c01",
+     "section": "EXCLUDE PATIENT TYPE",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "Left column. Unlabelled read-only box showing None; blue (enabled) SELECT button with person-plus icon."
+    },
+    {
+     "control_id": "appointment_reports.r02.s06.c01",
+     "section": "EXCLUDE RESP. PARTY TYPE",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "Right column. Unlabelled read-only box showing None; blue (enabled) SELECT button with person-plus icon."
+    },
+    {
+     "control_id": "appointment_reports.r02.s07.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Show Patient Balance",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Full-width section; the only option in it; ticked by default."
+    }
+   ]
+  },
+  {
+   "report_id": "appointment_reports.r03",
+   "name": "New Patients via Appointments",
+   "screenshots": [
+    "3.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Only 3.PNG shows this report (default state). Smallest criteria set of the category: three full-width sections only (PRINT FORMAT, OFFICE/GROUP, DATE RANGE); no Provider picker and no other options. Nothing greyed out; large empty area below, then the action bar - content fully visible.",
+   "controls": [
+    {
+     "control_id": "appointment_reports.r03.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Full-width section (first row of the panel)."
+    },
+    {
+     "control_id": "appointment_reports.r03.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Full-width section (no PROVIDER section beside it on this report). No row label."
+    },
+    {
+     "control_id": "appointment_reports.r03.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button with building icon."
+    },
+    {
+     "control_id": "appointment_reports.r03.s03.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Full-width section. Calendar icon at the right end of the box; value = capture date."
+    },
+    {
+     "control_id": "appointment_reports.r03.s03.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon at the right end of the box."
+    }
+   ]
+  },
+  {
+   "report_id": "appointment_reports.r04",
+   "name": "Lab Report",
+   "screenshots": [
+    "4.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Only 4.PNG shows this report (state: REPORT TYPE = 'Appointment List'; the other three report types were not captured). Layout: REPORT TYPE | PRINT FORMAT; OFFICE/GROUP | PROVIDER; DUE DATE | LAB; APPOINTMENT DATE RANGE (full width); EXCLUDE PATIENT TYPE | EXCLUDE RESP. PARTY TYPE. Only greyed control: the Due Date box. No OTHER OPTIONS section. Empty area below the last section, then the action bar - content fully visible.",
+   "controls": [
+    {
+     "control_id": "appointment_reports.r04.s01.c01",
+     "section": "REPORT TYPE",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Appointment List",
+      "Not Sent",
+      "Not Received",
+      "Due Date"
+     ],
+     "default_value": "Appointment List",
+     "enabled": true,
+     "notes": "Left column of the first row (PRINT FORMAT is to its right)."
+    },
+    {
+     "control_id": "appointment_reports.r04.s02.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Right column of the first row."
+    },
+    {
+     "control_id": "appointment_reports.r04.s03.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left column (PROVIDER section is to its right). No row label."
+    },
+    {
+     "control_id": "appointment_reports.r04.s03.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button with building icon."
+    },
+    {
+     "control_id": "appointment_reports.r04.s04.c01",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right column. Read-only grey box; blue SELECT button with single-person icon."
+    },
+    {
+     "control_id": "appointment_reports.r04.s05.c01",
+     "section": "DUE DATE",
+     "label": "Due Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": false,
+     "notes": "Left column (LAB section is to its right). GREYED OUT / disabled in this state: the box has the grey read-only fill (RGB 220,223,226), unlike the lighter enabled Start Date / End Date boxes (241,241,241); the calendar icon is still shown. Presumably enabled only when REPORT TYPE = 'Due Date' (inference - not verifiable from the screenshot)."
+    },
+    {
+     "control_id": "appointment_reports.r04.s06.c01",
+     "section": "LAB",
+     "label": "Lab",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right column. Read-only grey box; blue SELECT button with building icon."
+    },
+    {
+     "control_id": "appointment_reports.r04.s07.c01",
+     "section": "APPOINTMENT DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Full-width section. Calendar icon at the right end of the box; value = capture date."
+    },
+    {
+     "control_id": "appointment_reports.r04.s07.c02",
+     "section": "APPOINTMENT DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon at the right end of the box."
+    },
+    {
+     "control_id": "appointment_reports.r04.s08.c01",
+     "section": "EXCLUDE PATIENT TYPE",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "Left column. Unlabelled read-only box showing None; blue (enabled) SELECT button with person-plus icon."
+    },
+    {
+     "control_id": "appointment_reports.r04.s09.c01",
+     "section": "EXCLUDE RESP. PARTY TYPE",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "Right column. Unlabelled read-only box showing None; blue (enabled) SELECT button with person-plus icon."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "appointment_reports.r04.k01",
+     "about": "meaning",
+     "control_id": "appointment_reports.r04.s01.c01",
+     "text": "REPORT TYPE = Appointment List is the former report Appointment List – Lab: all appointments in the range that carry a lab case.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`Appointment List` | `Appointment List – Lab`"
+    },
+    {
+     "correction_id": "appointment_reports.r04.k02",
+     "about": "meaning",
+     "control_id": "appointment_reports.r04.s01.c01",
+     "text": "REPORT TYPE = Not Sent is the former report Lab Required Not Sent Appointment List: a lab case is required but has no sent date.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`Not Sent` | `Lab Required Not Sent Appointment List`"
+    },
+    {
+     "correction_id": "appointment_reports.r04.k03",
+     "about": "meaning",
+     "control_id": "appointment_reports.r04.s01.c01",
+     "text": "REPORT TYPE = Not Received is the former report Lab Sent Not Received Appointment List: cases sent to the lab and not yet received.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Not Received` | `Lab Sent Not Received Appointment List` | `Lab Sent Not Received Appointments` `[P26·img]` | Sent, not yet received"
+    },
+    {
+     "correction_id": "appointment_reports.r04.k04",
+     "about": "meaning",
+     "control_id": "appointment_reports.r04.s01.c01",
+     "text": "REPORT TYPE = Due Date is the former report Appointment List - Lab due date. That it lists the cases due on the single DUE DATE chosen is unverified (see unresolved).",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`Due Date` | `Appointment List - Lab due date`"
+    },
+    {
+     "correction_id": "appointment_reports.r04.k05",
+     "about": "other",
+     "control_id": "appointment_reports.r04.s05.c01",
+     "text": "A vendor screenshot taken with REPORT TYPE = Not Received also shows a date in the DUE DATE box; whether the box is enabled there cannot be read. The rule that enables it therefore stays unverified (see unresolved).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "With `Not Received` the `DUE DATE` box shows a date; its enabled state is not readable."
+    },
+    {
+     "correction_id": "appointment_reports.r04.k06",
+     "about": "meaning",
+     "control_id": "appointment_reports.r04.s07.c01",
+     "text": "APPOINTMENT DATE RANGE filters on the date of the appointment that carries the lab case (the lab data are fields of that appointment).",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`APPOINTMENT DATE RANGE` | Filters on the date of the appointment that carries the lab case."
+    },
+    {
+     "correction_id": "appointment_reports.r04.k07",
+     "about": "other",
+     "control_id": "",
+     "text": "Hidden population rule with no criteria control: a lab case exists only as lab fields on one appointment (the impression or the delivery appointment - the office chooses); an appointment without those fields never appears on the report.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "The case exists only as fields on one appointment (impression or delivery appointment"
+    }
+   ]
+  },
+  {
+   "report_id": "appointment_reports.r05",
+   "name": "SmartAssist Report Card",
+   "screenshots": [
+    "5.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Only 5.PNG shows this report (default state). Layout: REPORT FORMAT | PRINT FORMAT; OFFICE/GROUP | PROVIDER; APPOINTMENT DATE RANGE (full width); OTHER OPTIONS (full width, two stacked checkboxes). Nothing greyed out. Empty area below the last section, then the action bar - content fully visible.",
+   "controls": [
+    {
+     "control_id": "appointment_reports.r05.s01.c01",
+     "section": "REPORT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Detail",
+      "Summary"
+     ],
+     "default_value": "Detail",
+     "enabled": true,
+     "notes": "Left column of the first row (PRINT FORMAT is to its right)."
+    },
+    {
+     "control_id": "appointment_reports.r05.s02.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Right column of the first row."
+    },
+    {
+     "control_id": "appointment_reports.r05.s03.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left column (PROVIDER section is to its right). No row label."
+    },
+    {
+     "control_id": "appointment_reports.r05.s03.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button with building icon."
+    },
+    {
+     "control_id": "appointment_reports.r05.s04.c01",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right column. Read-only grey box; blue SELECT button with single-person icon."
+    },
+    {
+     "control_id": "appointment_reports.r05.s05.c01",
+     "section": "APPOINTMENT DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Full-width section. Calendar icon at the right end of the box; value = capture date."
+    },
+    {
+     "control_id": "appointment_reports.r05.s05.c02",
+     "section": "APPOINTMENT DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon at the right end of the box."
+    },
+    {
+     "control_id": "appointment_reports.r05.s06.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Include Missed Appointments",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Full-width section; first of two checkboxes stacked vertically."
+    },
+    {
+     "control_id": "appointment_reports.r05.s06.c02",
+     "section": "OTHER OPTIONS",
+     "label": "Include Cancelled Appointments",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Second checkbox, on its own row below Include Missed Appointments."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "appointment_reports.r05.k01",
+     "about": "meaning",
+     "control_id": "appointment_reports.r05.s05.c01",
+     "text": "APPOINTMENT DATE RANGE is matched on the appointment date. A range in the future returns rows only when Include Missed Appointments is ticked.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`APPOINTMENT DATE RANGE` | Appointment date; future dates return rows only with `Include Missed Appointments`."
+    },
+    {
+     "correction_id": "appointment_reports.r05.k02",
+     "about": "meaning",
+     "control_id": "appointment_reports.r05.s06.c01",
+     "text": "Include Missed Appointments adds the appointments that did not go from checked in through checked out, or that have no posted procedures - future appointments included.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Include Missed Appointments` | Adds appointments not checked in through checked out / without posted procedures, including future ones."
+    },
+    {
+     "correction_id": "appointment_reports.r05.k03",
+     "about": "meaning",
+     "control_id": "appointment_reports.r05.s03.c02",
+     "text": "Selecting several offices does not widen what a check reads: every appointment is checked only against the data of its own office (OID), so a note or a next appointment that exists in another office counts as missing.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Checks read only data of the office (OID) of the appointment, even when several offices are selected"
+    },
+    {
+     "correction_id": "appointment_reports.r05.k04",
+     "about": "meaning",
+     "control_id": "appointment_reports.r05.s06.c02",
+     "text": "Include Cancelled Appointments adds the cancelled appointments to the report card; without the tick they are left out.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`Include Cancelled Appointments` | Adds cancelled appointments."
+    }
+   ]
+  },
+  {
+   "report_id": "appointment_reports.r06",
+   "name": "Appointments Confirmed Via Vendors",
+   "screenshots": [
+    "6.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Only 6.PNG shows this report (default state). Four full-width sections: PRINT FORMAT; OFFICE/GROUP; DATE RANGE; VENDORS. No Provider picker. Nothing greyed out. Empty area below the last section, then the action bar - content fully visible.",
+   "controls": [
+    {
+     "control_id": "appointment_reports.r06.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Full-width section (first row of the panel)."
+    },
+    {
+     "control_id": "appointment_reports.r06.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Full-width section (no PROVIDER section beside it on this report). No row label."
+    },
+    {
+     "control_id": "appointment_reports.r06.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button with building icon."
+    },
+    {
+     "control_id": "appointment_reports.r06.s03.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Full-width section. Calendar icon at the right end of the box; value = capture date."
+    },
+    {
+     "control_id": "appointment_reports.r06.s03.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon at the right end of the box."
+    },
+    {
+     "control_id": "appointment_reports.r06.s04.c01",
+     "section": "VENDORS",
+     "label": "Vendors",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Full-width section. Read-only grey box showing ALL; blue SELECT button with building icon."
+    }
+   ]
+  },
+  {
+   "report_id": "appointment_reports.r07",
+   "name": "Appointment Time Stamps",
+   "screenshots": [
+    "7.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Only 7.PNG shows this report (default state). Layout: PRINT FORMAT (full width); OFFICE/GROUP | PROVIDER; DATE RANGE (full width). Nothing greyed out. Large empty area below, then the action bar - content fully visible.",
+   "controls": [
+    {
+     "control_id": "appointment_reports.r07.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Full-width section (first row of the panel)."
+    },
+    {
+     "control_id": "appointment_reports.r07.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left column (PROVIDER section is to its right). No row label."
+    },
+    {
+     "control_id": "appointment_reports.r07.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button with building icon."
+    },
+    {
+     "control_id": "appointment_reports.r07.s03.c01",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right column. Read-only grey box; blue SELECT button with single-person icon."
+    },
+    {
+     "control_id": "appointment_reports.r07.s04.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Full-width section. Calendar icon at the right end of the box; value = capture date."
+    },
+    {
+     "control_id": "appointment_reports.r07.s04.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon at the right end of the box."
+    }
+   ]
+  },
+  {
+   "report_id": "appointment_reports.r08",
+   "name": "Appointment Detail",
+   "screenshots": [
+    "8.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Only 8.PNG shows this report (default state). Largest criteria set of the category. Layout: APPOINTMENT TYPE | PRINT FORMAT; APPOINT NOW (full-width header: checkbox on the left half, radio group on the right half); OFFICE/GROUP | PROVIDER/USER; DATE RANGE (full width); OPERATORY (full width); GROUP BY | PAGE BREAK BY; OTHER OPTIONS | CANCELLATION REASON. Greyed out in this state: the Both / Appoint Now / Appoint Now API radios, the 'User' option of PAGE BREAK BY and the CANCELLATION REASON SELECT button. BOTTOM CLIPPED: the criteria content fills the fixed-height viewport and runs into the action bar. In the LEFT column, below 'Include Patient Phone Number' (row ends at y=536 in 8.PNG) comes the usual 2 px separator (y=537-538) and then a 1 px sliver in row colour (x 466-908, y=539) before the action bar starts at y=540; the right column shows plain empty panel background at the same height. That sliver is the top of a THIRD row under OTHER OPTIONS whose content is not visible (recorded as an 'other' placeholder control); further content below it cannot be excluded. No scrollbar is drawn. The related report 'Appointment Detail by User' in My Reports (my_reports/4.PNG) shows only the same two checkboxes in its OTHER OPTIONS, so it gives no hint about the hidden row. Must be checked on the live screen.",
+   "controls": [
+    {
+     "control_id": "appointment_reports.r08.s01.c01",
+     "section": "APPOINTMENT TYPE",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Regular",
+      "Archived"
+     ],
+     "default_value": "Regular",
+     "enabled": true,
+     "notes": "Left column of the first row (PRINT FORMAT is to its right)."
+    },
+    {
+     "control_id": "appointment_reports.r08.s02.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Right column of the first row."
+    },
+    {
+     "control_id": "appointment_reports.r08.s03.c01",
+     "section": "APPOINT NOW",
+     "label": "Only AppointNow Appointments",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Full-width header; this checkbox is in the LEFT half of the row. The checkbox text writes AppointNow as one word, the header and the radios write 'Appoint Now'."
+    },
+    {
+     "control_id": "appointment_reports.r08.s03.c02",
+     "section": "APPOINT NOW",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Both",
+      "Appoint Now",
+      "Appoint Now API"
+     ],
+     "default_value": "Both",
+     "enabled": false,
+     "notes": "RIGHT half of the same row. All three radios and their labels are GREYED OUT / disabled while 'Only AppointNow Appointments' is unchecked; 'Both' shows a grey filled dot (selected but disabled). Presumably enabled by ticking the checkbox (inference - not verifiable from the screenshot)."
+    },
+    {
+     "control_id": "appointment_reports.r08.s04.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left column (PROVIDER/USER section is to its right). No row label."
+    },
+    {
+     "control_id": "appointment_reports.r08.s04.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button with building icon."
+    },
+    {
+     "control_id": "appointment_reports.r08.s05.c01",
+     "section": "PROVIDER/USER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right column, first row. Read-only grey box; blue SELECT button with single-person icon."
+    },
+    {
+     "control_id": "appointment_reports.r08.s05.c02",
+     "section": "PROVIDER/USER",
+     "label": "User",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right column, second row (below Provider). Read-only grey box; blue SELECT button with person-plus icon."
+    },
+    {
+     "control_id": "appointment_reports.r08.s06.c01",
+     "section": "DATE RANGE",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Appointment Date",
+      "Created On Date"
+     ],
+     "default_value": "Appointment Date",
+     "enabled": true,
+     "notes": "Full-width section; radio row above the two date rows - chooses which date the range applies to."
+    },
+    {
+     "control_id": "appointment_reports.r08.s06.c02",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon at the right end of the box; value = capture date."
+    },
+    {
+     "control_id": "appointment_reports.r08.s06.c03",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon at the right end of the box."
+    },
+    {
+     "control_id": "appointment_reports.r08.s07.c01",
+     "section": "OPERATORY",
+     "label": "Operatory",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Full-width section. Read-only grey box showing ALL; blue (enabled) SELECT button with single-person icon (enabled here, unlike on Appointment List)."
+    },
+    {
+     "control_id": "appointment_reports.r08.s08.c01",
+     "section": "GROUP BY",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Provider",
+      "User"
+     ],
+     "default_value": "Provider",
+     "enabled": true,
+     "notes": "Left column (PAGE BREAK BY section is to its right)."
+    },
+    {
+     "control_id": "appointment_reports.r08.s09.c01",
+     "section": "PAGE BREAK BY",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "None",
+      "Date",
+      "Provider",
+      "User"
+     ],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "Right column. None, Date and Provider are enabled; the fourth option 'User' is GREYED OUT / disabled in this state (GROUP BY = Provider) - presumably it becomes available when GROUP BY = User (inference - not verifiable from the screenshot)."
+    },
+    {
+     "control_id": "appointment_reports.r08.s10.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Include Cancelled Appointments",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Left column (CANCELLATION REASON section is to its right); first row."
+    },
+    {
+     "control_id": "appointment_reports.r08.s10.c02",
+     "section": "OTHER OPTIONS",
+     "label": "Include Patient Phone Number",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Left column, second row - the last fully visible row of the panel."
+    },
+    {
+     "control_id": "appointment_reports.r08.s10.c03",
+     "section": "OTHER OPTIONS",
+     "label": "[?]",
+     "type": "other",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "CLIPPED ROW - CONTENT NOT VISIBLE (placeholder so it is not lost; label recorded as [?]). Directly below 'Include Patient Phone Number' a THIRD row of this left column begins and is cut off by the action bar: only a 1 px sliver in row colour is visible (8.PNG y=539, x 466-908, right after the usual 2 px separator at y=537-538), exactly the row / 2 px separator / row pattern of the two rows above, while the right column shows empty panel background at the same height. Most likely one more checkbox, but nothing of it can be read and it could also be an empty row; its enabled state is unknown (true is only a filler value). Must be checked on the live screen."
+    },
+    {
+     "control_id": "appointment_reports.r08.s11.c01",
+     "section": "CANCELLATION REASON",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": false,
+     "notes": "Right column, beside OTHER OPTIONS. Unlabelled read-only box showing ALL; its SELECT button (building icon) is GREYED OUT / disabled in this state ('Include Cancelled Appointments' unchecked) - presumably enabled once cancelled appointments are included (inference - not verifiable from the screenshot)."
+    },
+    {
+     "control_id": "appointment_reports.r08.x01",
+     "section": "OTHER OPTIONS",
+     "label": "Include Patient Home Office",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "This is the control behind the clipped placeholder row appointment_reports.r08.s10.c03 ([?]) of the inventory: the third row of OTHER OPTIONS, which the action bar hides in our capture. Vendor screenshots of the criteria screen show it. Taken as a checkbox because it is the third option of the OTHER OPTIONS checkbox column; its default (ticked or not) is not stated and what it prints is unverified.",
+     "origin": "vendor_doc",
+     "confidence": "confirmed",
+     "options_unknown": false,
+     "evidence_quote": "The clipped third row of `OTHER OPTIONS` is `Include Patient Home Office`; nothing follows it.",
+     "source_document": "research/legacy_report_outputs_appointment_recall_referral.md"
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "appointment_reports.r08.d01",
+     "when": "Only AppointNow Appointments is ticked",
+     "effect": "The three radios Both / Appoint Now / Appoint Now API become enabled; the User picker and both GROUP BY radios (Provider / User) are disabled.",
+     "controls": [
+      "appointment_reports.r08.s03.c01",
+      "appointment_reports.r08.s03.c02",
+      "appointment_reports.r08.s05.c02",
+      "appointment_reports.r08.s08.c01"
+     ],
+     "confidence": "confirmed",
+     "evidence_quote": "Ticking `Only AppointNow Appointments` enables the three radios and disables the `User` picker and both `GROUP BY` radios."
+    }
+   ],
+   "possibly_truncated_screenshot": true,
+   "corrections": [
+    {
+     "correction_id": "appointment_reports.r08.k01",
+     "about": "truncation",
+     "control_id": "",
+     "text": "The row that the action bar cuts off is the third and last row of OTHER OPTIONS, Include Patient Home Office (see added_controls); nothing follows it, so with that control the criteria panel is complete.",
+     "resolves_truncation": true,
+     "confidence": "confirmed",
+     "evidence_quote": "The clipped third row of `OTHER OPTIONS` is `Include Patient Home Office`; nothing follows it."
+    },
+    {
+     "correction_id": "appointment_reports.r08.k02",
+     "about": "label",
+     "control_id": "appointment_reports.r08.s10.c03",
+     "text": "The placeholder control [?] (clipped third row of OTHER OPTIONS) is the checkbox Include Patient Home Office recorded under added_controls - one control, not two.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Include Patient Home Office` | Third option, hidden in our capture"
+    },
+    {
+     "correction_id": "appointment_reports.r08.k03",
+     "about": "meaning",
+     "control_id": "appointment_reports.r08.s03.c01",
+     "text": "Only AppointNow Appointments restricts the report to online (AppointNow) bookings.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`APPOINT NOW` `Only AppointNow Appointments` | Restricts to online bookings"
+    },
+    {
+     "correction_id": "appointment_reports.r08.k04",
+     "about": "meaning",
+     "control_id": "appointment_reports.r08.s03.c02",
+     "text": "Appoint Now API selects the bookings made by third parties through the AppointNow API.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Appoint Now API` = bookings made by third parties through the AppointNow API."
+    },
+    {
+     "correction_id": "appointment_reports.r08.k05",
+     "about": "meaning",
+     "control_id": "appointment_reports.r08.s05.c02",
+     "text": "User refers to the user who created the appointment: the vendor uses the report to review the appointments created by a user.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "review appointments created by a user or on a date"
+    },
+    {
+     "correction_id": "appointment_reports.r08.k06",
+     "about": "meaning",
+     "control_id": "appointment_reports.r08.s06.c01",
+     "text": "The radio chooses the date basis of the range: the date of the appointment (Appointment Date) or the date the appointment was created (Created On Date).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`DATE RANGE` `Appointment Date` / `Created On Date` | Date basis of the range"
+    },
+    {
+     "correction_id": "appointment_reports.r08.k07",
+     "about": "meaning",
+     "control_id": "appointment_reports.r08.s10.c01",
+     "text": "Without the tick the report lists the non-cancelled appointments only - missed ones are included; Include Cancelled Appointments adds the cancelled ones.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Adds cancelled appointments (default: non-cancelled only, missed included)"
+    },
+    {
+     "correction_id": "appointment_reports.r08.k08",
+     "about": "meaning",
+     "control_id": "appointment_reports.r08.s08.c01",
+     "text": "GROUP BY sets the first grouping level under the office: Provider or User.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`GROUP BY` `Provider` / `User` | First grouping level under the office."
+    },
+    {
+     "correction_id": "appointment_reports.r08.k09",
+     "about": "meaning",
+     "control_id": "appointment_reports.r08.s08.c01",
+     "text": "The pre-2021 menu reports Appointment Details Report and Appointment Detail By User are this report; the by-user one corresponds to GROUP BY = User (a restricted variant, Appointment Detail by User, also lives in My Reports).",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`Appointment Details Report`, `Appointment Detail By User` | `Appointment Detail` (`GROUP BY` `User`; My Reports variant)"
+    },
+    {
+     "correction_id": "appointment_reports.r08.k10",
+     "about": "meaning",
+     "control_id": "appointment_reports.r08.s06.c01",
+     "text": "Created dates are stored in Pacific (server) time with no office-local conversion, so DATE RANGE = Created On Date is matched on the Pacific-time creation date.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Created dates are Pacific time"
+    },
+    {
+     "correction_id": "appointment_reports.r08.k11",
+     "about": "meaning",
+     "control_id": "appointment_reports.r08.s10.c02",
+     "text": "Include Patient Phone Number adds the patient phone numbers to the listing.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Include Patient Phone Number` | Adds the patient phone numbers."
+    },
+    {
+     "correction_id": "appointment_reports.r08.k12",
+     "about": "other",
+     "control_id": "",
+     "text": "Hidden population rule with no criteria control: deleted appointments never appear on this report (stated by the document for every appointment report - see Appointment List).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Deleted appointments never appear"
+    }
+   ]
+  },
+  {
+   "report_id": "appointment_reports.r09",
+   "name": "Lab Cost Report",
+   "screenshots": [
+    "9.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Only 9.PNG shows this report (default state, REPORT TYPE = 'All'). Layout: REPORT TYPE | PRINT FORMAT; OFFICE/GROUP | PROVIDER; LAB (full width); APPOINTMENT DATE RANGE (full width); EXCLUDE PATIENT TYPE | EXCLUDE RESP. PARTY TYPE; OTHER OPTIONS (full width). Nothing greyed out even though REPORT TYPE has date-specific options. No separate DUE DATE section (unlike Lab Report). Empty area below the last section, then the action bar - content fully visible.",
+   "controls": [
+    {
+     "control_id": "appointment_reports.r09.s01.c01",
+     "section": "REPORT TYPE",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "All",
+      "Sent Date",
+      "Due Date",
+      "Received Date"
+     ],
+     "default_value": "All",
+     "enabled": true,
+     "notes": "Left column of the first row (PRINT FORMAT is to its right)."
+    },
+    {
+     "control_id": "appointment_reports.r09.s02.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Right column of the first row."
+    },
+    {
+     "control_id": "appointment_reports.r09.s03.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left column (PROVIDER section is to its right). No row label."
+    },
+    {
+     "control_id": "appointment_reports.r09.s03.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button with building icon."
+    },
+    {
+     "control_id": "appointment_reports.r09.s04.c01",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right column. Read-only grey box; blue SELECT button with single-person icon."
+    },
+    {
+     "control_id": "appointment_reports.r09.s05.c01",
+     "section": "LAB",
+     "label": "Lab",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Full-width section (on Lab Report the LAB section is a right-hand column instead). Read-only grey box showing ALL; blue SELECT button with building icon."
+    },
+    {
+     "control_id": "appointment_reports.r09.s06.c01",
+     "section": "APPOINTMENT DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Full-width section. Calendar icon at the right end of the box; value = capture date."
+    },
+    {
+     "control_id": "appointment_reports.r09.s06.c02",
+     "section": "APPOINTMENT DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon at the right end of the box."
+    },
+    {
+     "control_id": "appointment_reports.r09.s07.c01",
+     "section": "EXCLUDE PATIENT TYPE",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "Left column. Unlabelled read-only box showing None; blue (enabled) SELECT button with person-plus icon."
+    },
+    {
+     "control_id": "appointment_reports.r09.s08.c01",
+     "section": "EXCLUDE RESP. PARTY TYPE",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "Right column. Unlabelled read-only box showing None; blue (enabled) SELECT button with person-plus icon."
+    },
+    {
+     "control_id": "appointment_reports.r09.s09.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Exclude Lab Received",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Full-width section; the only option in it."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "appointment_reports.r09.k01",
+     "about": "meaning",
+     "control_id": "appointment_reports.r09.s01.c01",
+     "text": "REPORT TYPE chooses which date the range is matched against (Sent Date, Due Date or Received Date); the date section keeps the title APPOINTMENT DATE RANGE whichever is chosen. The vendor recommends Received Date. What All matches is unverified (see unresolved).",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`REPORT TYPE` `All` / `Sent Date` / `Due Date` / `Received Date` | Which date the range is matched against"
+    },
+    {
+     "correction_id": "appointment_reports.r09.k02",
+     "about": "other",
+     "control_id": "",
+     "text": "Hidden population rule with no criteria control: the lab reports read the lab fields stored on the appointment (Lab, Lab Cost, Sent on, Due on, Recvd. on); a case that is not recorded in those fields never appears on the report.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Lab reports read lab fields stored on the appointment** (`Lab`, `Lab Cost`, `Sent on`, `Due on`, `Recvd. on`)"
+    }
+   ]
+  }
+ ],
+ "supplement_unresolved": [
+  {
+   "report_id": "appointment_reports.r01",
+   "question": "Which criteria are enabled for the four list formats that were never captured - Call List, Pull Chart List, Cancelled From Automated Campaigns and Missed List? The document has the states for Confirmation Call List and Cancelled List only. It presumes (unverified) that Length, Status Missed / Cancelled and Include Off Call List are active for Call List and that SORT BY is enabled for Pull Chart List."
+  },
+  {
+   "report_id": "appointment_reports.r01",
+   "question": "With Cancelled List selected, are SORT BY and Include Patient Balance enabled? The vendor-screenshot states are given only for the two exclude pickers, CANCELLATION REASON, Include Off Call List, OPERATORY, Length and Status."
+  },
+  {
+   "report_id": "appointment_reports.r01",
+   "question": "Values of the Length dropdown other than Any are not documented (the control mirrors the Scheduler Call List filter Select Duration (mins))."
+  },
+  {
+   "report_id": "appointment_reports.r01",
+   "question": "Default of the hidden PRINT FORMAT section is not stated for Appointment List (PDF on the other eight reports of the category), and neither is its position relative to REPORT FORMAT TO PRINT (above it or beside it)."
+  },
+  {
+   "report_id": "appointment_reports.r01",
+   "question": "Older build: in June 2023 the fifth radio was labelled Cancelled From Denticon Patient Engagement; from May 2024 it reads Cancelled From Automated Campaigns. The old label is not added as an option - keep it as a search alias only?"
+  },
+  {
+   "report_id": "appointment_reports.r02",
+   "question": "No vendor article, sample or training page describes this report; its criteria are known from our capture only. The date basis of DATE RANGE and the missed rule the report applies are inferred."
+  },
+  {
+   "report_id": "appointment_reports.r03",
+   "question": "Vendor text documents the purpose of this report, not its criteria screen. Is DATE RANGE matched on the date of the placeholder appointment (not stated)?"
+  },
+  {
+   "report_id": "appointment_reports.r04",
+   "question": "Is the Due Date box enabled only when REPORT TYPE = Due Date (unverified - seen greyed with Appointment List; with Not Received it shows a date but its state is not readable)? Does Due Date list the cases due on that single date, and does APPOINTMENT DATE RANGE still apply then? The criteria states for Not Sent, Not Received and Due Date were never captured."
+  },
+  {
+   "report_id": "appointment_reports.r04",
+   "question": "Newer build: since 2026-11 labs can be assigned per office / office group. Is the LAB picker of Lab Report and Lab Cost Report limited to the labs of the selected offices then? Not stated."
+  },
+  {
+   "report_id": "appointment_reports.r05",
+   "question": "REPORT FORMAT = Summary was not seen in any vendor material (presumably percentages only, per office / provider - unverified); whether it changes any criteria is unknown."
+  },
+  {
+   "report_id": "appointment_reports.r06",
+   "question": "No vendor article describes this report. What does the VENDORS picker list - presumably the API vendors enabled per office under Setup > Offices > Vendor API Settings (New) (unverified)? Is DATE RANGE the appointment date or the confirmation date?"
+  },
+  {
+   "report_id": "appointment_reports.r08",
+   "question": "In the default state (GROUP BY = Provider) the User option of PAGE BREAK BY is disabled. Does it become selectable when GROUP BY = User? Presumed by the document, unverified - so no rule is recorded."
+  },
+  {
+   "report_id": "appointment_reports.r08",
+   "question": "Does ticking Include Cancelled Appointments unlock the CANCELLATION REASON picker (greyed by default)? Presumed by the document, unverified."
+  },
+  {
+   "report_id": "appointment_reports.r08",
+   "question": "What does Include Patient Home Office print (presumably the patient's home office - unverified), and is it ticked by default? The document names it as the third row / third option of OTHER OPTIONS without stating the control type; it is recorded as a checkbox because the other two rows of that column are checkboxes."
+  },
+  {
+   "report_id": "appointment_reports.r08",
+   "question": "What does APPOINTMENT TYPE = Archived select? Live versus archived appointments (archiving being a Patient Overview action) is unverified."
+  },
+  {
+   "report_id": "appointment_reports.r09",
+   "question": "What does REPORT TYPE = All match the date range against? Appointment date is unverified."
+  },
+  {
+   "report_id": "appointment_reports.r09",
+   "question": "What does Exclude Lab Received do? That it drops the cases already received is unverified."
+  },
+  {
+   "report_id": "",
+   "question": "Picker dialogs this document does not describe (it refers to legacy_report_outputs_daily_my.md for the picker dialogs): Provider, User, Operatory, Lab, Vendors, and the layout of the Cancellation Reason, Exclude Patient Type and Exclude Resp. Party Type dialogs - for the last three only the value domain is given. For the User picker the document only notes that AppointNow bookings appear under the system user _APPOINTNOWPAT_ (shown as Appoint Now); whether the picker lists that user is not stated."
+  },
+  {
+   "report_id": "",
+   "question": "The Office / Office Group semantics and the UPDATE MY FAVORITES relabel are stated by the document as cross-cutting facts for the Appointment, Recall and Referral criteria screens and are recorded once, on Appointment List. Confirm that they hold on every report screen of the category, and whether the relabel appears only when the screen is opened from My Favorites."
+  },
+  {
+   "report_id": "",
+   "question": "Older build: pre-2021 menus listed Routing Slips under Appointment Reports; it is now Daily Reports > Routing Slip. Not added here - confirm it is out of scope for this category."
+  },
+  {
+   "report_id": "",
+   "question": "Rights: the vendor lists the security right Reports - Appointment Reports Screen in two variants, Full Control and View Only (view only = see the report list and the parameters, cannot generate). How View Only shows on the criteria screen (PRINT / PREVIEW hidden or disabled?) is not described, so no rule is recorded."
+  },
+  {
+   "report_id": "",
+   "question": "Vendor sources the research could not read and that may document the criteria left open here: the release-note articles (sign-in required) and the video-only webinars 56 Reports, 60 A Dive into SmartAssist and 23 Referrals, Labs, and Miscellaneous Helpful Features. Missed Appointments Not Marked As Missed, New Patients via Appointments and Appointments Confirmed Via Vendors have no vendor description of their criteria at all."
+  }
+ ],
+ "supplement_source_document": "research/legacy_report_outputs_appointment_recall_referral.md",
+ "screenshot_control_count": 91,
+ "vendor_doc_control_count": 2
+}

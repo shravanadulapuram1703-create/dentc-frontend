@@ -312,6 +312,31 @@ export interface SaveEditsInput {
   opening_balance: OpeningBalanceIn | null;
 }
 
+/** Guarantor keys the backend routes through the account service on PATCH. */
+const GUARANTOR_KEYS = [
+  "responsible_party_id",
+  "guarantor_patient_id",
+  "guarantor_party_id",
+  "account_id",
+] as const;
+
+/**
+ * Drop guarantor keys that carry no value. The shared payload builder emits
+ * `null` for every unset field, and the backend refuses a PATCH whose guarantor
+ * keys are all empty (`422 guarantor_required` — "a patient must always have a
+ * responsible party"). That rejected EVERY Step-1 save in edit mode (e.g. a
+ * fee-schedule change). The guarantor itself is written by the Responsible
+ * Party step (`savePatientSections`), so Step 1 only forwards a real value.
+ */
+export function stripEmptyGuarantorKeys(body: PatientUpdate): PatientUpdate {
+  const out: Record<string, unknown> = { ...body };
+  for (const key of GUARANTOR_KEYS) {
+    const v = out[key];
+    if (v == null || (typeof v === "string" && !v.trim())) delete out[key];
+  }
+  return out as PatientUpdate;
+}
+
 /**
  * Persist the Patient Information screen. The patient record is the only
  * required write — if it fails the whole save fails. The opening balance is
@@ -320,7 +345,7 @@ export interface SaveEditsInput {
 export async function savePatientEdits(input: SaveEditsInput): Promise<string[]> {
   const warnings: string[] = [];
 
-  await updatePatient(input.patient_id, input.patient);
+  await updatePatient(input.patient_id, stripEmptyGuarantorKeys(input.patient));
 
   // Always written so clearing a bucket back to zero sticks.
   try {

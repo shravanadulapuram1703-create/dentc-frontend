@@ -204,8 +204,9 @@ export async function loadInsuranceSummary(patientId: number): Promise<Insurance
       carrier_name: carrier_name || `Plan #${record.ins_plan_id}`,
       plan_type: plan?.plan_type ?? null,
       group_number: plan?.group_number || null,
-      max_remaining: record.max_remaining ?? null,
-      deductible_remaining: record.deductible_remaining ?? null,
+      // Server-derived from the benefit year's claims (TX-MAX-3); raw column = fallback.
+      max_remaining: record.max_remaining_effective ?? record.max_remaining ?? null,
+      deductible_remaining: record.deductible_remaining_effective ?? record.deductible_remaining ?? null,
     };
   };
 

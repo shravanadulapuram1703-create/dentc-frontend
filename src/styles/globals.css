@@ -136,6 +136,14 @@
   --ring: #0077B6;
 }
 
+/* Reports module container sizes (07 §9.8): `@rpt-sm:` / `@rpt-md:` / `@rpt-lg:` variants. Declared here
+   because Tailwind only reads @theme from the main stylesheet. */
+@theme {
+  --container-rpt-sm: 600px;
+  --container-rpt-md: 900px;
+  --container-rpt-lg: 1280px;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

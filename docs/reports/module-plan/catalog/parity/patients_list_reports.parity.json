@@ -1,0 +1,2627 @@
+{
+ "category": "patients_list_reports",
+ "reports": [
+  {
+   "report_id": "patients_list_reports.r01",
+   "legacy_name": "Update Patient Insurance (Conversion) List - By Appointment",
+   "report_key": "lists.update_patient_insurance_conversion_list_by_appointment",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "patients_list_reports.r01.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "patients_list_reports.r01.s02.c01",
+     "signature_id": "sig0218",
+     "legacy_section": "REPORT TYPE",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Summary",
+      "Detail"
+     ],
+     "legacy_default": "Summary",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "report_format",
+     "param_type": "enum",
+     "option_map": {
+      "Summary": "summary",
+      "Detail": "detail"
+     },
+     "default": "summary",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "REPORT TYPE with Summary / Detail is the report format spelled differently."
+    },
+    {
+     "control_id": "patients_list_reports.r01.s03.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "patients_list_reports.r01.s03.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in (default token working_office). Office attribution on this report: appointment office (rpt_appointment_facts.office_id) of the appointments in the range. Mode office lists offices, mode office_group lists office groups; all = every office the caller may read.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r01.s04.c01",
+     "signature_id": "sig0022",
+     "legacy_section": "APPOINTMENT DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range. Fixed basis appointment_date (rpt_appointment_facts.appointment_date, office-local); this section has no basis radio. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r01.s04.c02",
+     "signature_id": "sig0023",
+     "legacy_section": "APPOINTMENT DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range, inclusive end. Fixed basis appointment_date; no basis radio. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "patients_list_reports.r01.d01",
+     "legacy_when": "OFFICE/GROUP = Office Group",
+     "legacy_effect": "The SELECT picker chooses office groups defined in Setup > Office Groups (for example regions) instead of offices; when no office groups are defined, a group run covers all offices of the account. Cross-cutting statement of the document for all Lists screens (vendor articles on office groups and on the new reports menu) - recorded once here; it applies to every report of this category that has the Office / Office Group radios (all except Patient's Notes).",
+     "confidence": "confirmed",
+     "new_behavior": "office_scope on the 11 reports of this category that have OFFICE/GROUP (all except Patient's Notes, which has no office parameter: scope.office_mode = none, patient visibility via assert_patient_visible): the mode radio decides the value key. Mode office -> the picker lists offices (lookup:offices) and writes office_ids (list, token working_office (default), my_offices or all). Mode office_group -> the picker lists office groups (lookup:office_groups) and writes office_group_id or office_group_ids, default all. A tenant without office groups: mode office_group offers only all, which resolves to every office the caller may read (legacy: a group run covers all offices of the account), never wider than the caller's office rights (filter_card 6.1). Switching the mode resets the selection to that mode's default. Exactly one value key is sent."
+    }
+   ],
+   "legacy_corrections": [
+    {
+     "about": "default",
+     "control_id": "patients_list_reports.r01.s03.c02",
+     "text": "The number in the office box is not a fixed default: with the Office radio the box defaults to the current office (the OID of the session, the same number the title bar shows) and SELECT picks other offices. Recorded once here; it applies to the office box of every report of this category (all except Patient's Notes)."
+    },
+    {
+     "about": "meaning",
+     "control_id": "patients_list_reports.r01.s04.c01",
+     "text": "APPOINTMENT DATE RANGE (Start Date / End Date) is matched on the appointment date: the report lists patients of a converted practice who have appointments in the range and whose insurance still needs to be updated."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "patients_list_reports.r02",
+   "legacy_name": "Patient List",
+   "report_key": "lists.patient_list",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "patients_list_reports.r02.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "patients_list_reports.r02.s02.c01",
+     "signature_id": "sig0219",
+     "legacy_section": "PATIENT STATUS",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Active",
+      "Inactive",
+      "Both"
+     ],
+     "legacy_default": "Active",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "patient_status",
+     "param_type": "enum",
+     "option_map": {
+      "Active": "active",
+      "Inactive": "inactive",
+      "Both": "both"
+     },
+     "default": "active",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "patients_list_reports.r02.s03.c01",
+     "signature_id": "sig0042",
+     "legacy_section": "PATIENT TYPE",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Both",
+      "General",
+      "Ortho"
+     ],
+     "legacy_default": "Both",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "patient_type",
+     "param_type": "enum",
+     "option_map": {
+      "Both": "both",
+      "General": "general",
+      "Ortho": "ortho"
+     },
+     "default": "both",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Ortho-patient flag, not the user-defined patient types of INCLUDE / EXCLUDE PATIENT TYPE."
+    },
+    {
+     "control_id": "patients_list_reports.r02.s04.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "patients_list_reports.r02.s04.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in (default token working_office). Office attribution on this report: home office of the patient (rpt_patient_dim.home_office_id, current state; inferred - the legacy rule is not documented). Mode office lists offices, mode office_group lists office groups; all = every office the caller may read.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r02.s05.c01",
+     "signature_id": "sig0004",
+     "legacy_section": "PROVIDER",
+     "legacy_label": "Provider",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Provider role on this report: attached provider (scope.provider_attribution = attached, NEW role: coalesce(rpt_patient_dim.preferred_provider_id, rpt_patient_activity.last_visit_provider_id); owner 04 section 3 provider-role table and 03 section 5.2) - the fallback serves migrated patients, who carry no preferred provider; inferred from the research (old Active Patient List had the same Provider box). Generic key provider_ids kept because the legacy label is plain PROVIDER. ALL = no restriction; patients with neither provider match only under all. Never scoped by providers.office_id.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r02.s06.c01",
+     "signature_id": "sig0220",
+     "legacy_section": "INCLUDE PATIENT TYPE",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "include_patient_type_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool."
+    },
+    {
+     "control_id": "patients_list_reports.r02.s07.c01",
+     "signature_id": "sig0007",
+     "legacy_section": "EXCLUDE PATIENT TYPE",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "None",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "exclude_patient_type_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "none",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Exclude filter: None = exclude nothing; rows whose value is in the list are dropped. Dialog content was never captured - confirm on the live tool. Vendor documentation describes this option as an include filter on Special Transaction Report - confirm."
+    },
+    {
+     "control_id": "patients_list_reports.r02.s08.c01",
+     "signature_id": "sig0221",
+     "legacy_section": "SEX",
+     "legacy_label": "",
+     "legacy_type": "dropdown",
+     "legacy_options": [],
+     "legacy_default": "------",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "unknown_legacy",
+     "param": "gender",
+     "param_type": "enum",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Static dropdown captured collapsed: only the default is known. Expand the list on the live tool and record every option. The six hyphens are a no-selection placeholder (= all)."
+    },
+    {
+     "control_id": "patients_list_reports.r02.s09.c01",
+     "signature_id": "sig0222",
+     "legacy_section": "AGE RANGE",
+     "legacy_label": "From",
+     "legacy_type": "number_input",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "age_from",
+     "param_type": "number_range",
+     "option_map": {},
+     "default": null,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Lower age bound in years, inclusive; blank = no lower bound."
+    },
+    {
+     "control_id": "patients_list_reports.r02.s09.c02",
+     "signature_id": "sig0223",
+     "legacy_section": "AGE RANGE",
+     "legacy_label": "To",
+     "legacy_type": "number_input",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "age_to",
+     "param_type": "number_range",
+     "option_map": {},
+     "default": null,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Upper age bound in years, inclusive; blank = no upper bound."
+    },
+    {
+     "control_id": "patients_list_reports.r02.s10.c01",
+     "signature_id": "sig0224",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include Patients With No Email",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_patients_with_no_email",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "patients_list_reports.r02.s03.c01",
+     "text": "PATIENT TYPE (Both / General / Ortho) is a row filter on the orthodontic status of the patient: the vendor article on listing all orthodontic patients uses PATIENT TYPE = Ortho. That the filter reads the Ortho Patient checkbox of the patient record (and not the patient-type tags of INCLUDE / EXCLUDE PATIENT TYPE) is the document's assumption - see unresolved."
+    },
+    {
+     "about": "meaning",
+     "control_id": "patients_list_reports.r02.s02.c01",
+     "text": "PATIENT STATUS (Active / Inactive / Both) replaces the checkbox Include Inactive Patients of the older screens (2014 criteria of Patient List - Detail): Active leaves inactive patients out. The same radio row sits on Patient List - Grouped By."
+    },
+    {
+     "about": "meaning",
+     "control_id": "patients_list_reports.r02.s06.c01",
+     "text": "INCLUDE PATIENT TYPE / EXCLUDE PATIENT TYPE filter on patient types: optional report tags of which a patient can carry up to six. Recorded once here; it applies to the same pickers on Patient List - Grouped By and Patients on Payment Plan."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "patients_list_reports.r03",
+   "legacy_name": "Patient List - New Patient",
+   "report_key": "lists.patient_list_new_patient",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "patients_list_reports.r03.s01.c01",
+     "signature_id": "sig0196",
+     "legacy_section": "REPORT BY",
+     "legacy_label": "",
+     "legacy_type": "dropdown",
+     "legacy_options": [
+      "Carrier",
+      "Created Date / First Visit Date",
+      "Referral",
+      "Referral Type"
+     ],
+     "legacy_default": "Appointment",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "vendor_doc_options": [
+      "Carrier",
+      "Created Date / First Visit Date",
+      "Referral",
+      "Referral Type"
+     ],
+     "status": "replicated",
+     "param": "report_by",
+     "param_type": "enum",
+     "option_map": {
+      "Appointment": "appointment",
+      "Carrier": "carrier",
+      "Created Date / First Visit Date": "created_date_first_visit_date",
+      "Referral": "referral",
+      "Referral Type": "referral_type"
+     },
+     "default": "appointment",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Option list read from a vendor screenshot (2022), not from our capture: re-check on the live tool. The value selects the report variant and the date the range applies to (Appointment uses APPOINTMENT DATE RANGE). Differs from the shared mapping: REPORT BY list of Patient List - New Patient is known from vendor documentation; the signature itself stays unknown_legacy.",
+     "shared_override": true
+    },
+    {
+     "control_id": "patients_list_reports.r03.s02.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "patients_list_reports.r03.s03.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "patients_list_reports.r03.s03.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in (default token working_office). Office attribution on this report: report_by = appointment: appointment office (rpt_appointment_facts.office_id); every other mode: home office of the patient (rpt_patient_dim.home_office_id) - inferred, confirm on the live tool. Mode office lists offices, mode office_group lists office groups; all = every office the caller may read.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r03.s04.c01",
+     "signature_id": "sig0022",
+     "legacy_section": "APPOINTMENT DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range; the basis follows report_by: appointment -> appointment_date of the new-patient appointment (rpt_appointment_facts); created_date_first_visit_date -> created date of the patient record and/or first_visit_date (rpt_patient_activity) - how the legacy screen chooses between the two is not documented; referral, referral_type -> date the record was created (vendor: new records in the range) - inferred; carrier -> not documented. Whether the section title changes with the mode was not captured. Default today in the office time zone.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r03.s04.c02",
+     "signature_id": "sig0023",
+     "legacy_section": "APPOINTMENT DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range, inclusive end; basis follows report_by exactly as Start Date (appointment_date / created_date / first_visit_date). Default today in the office time zone.",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "patients_list_reports.r03.s01.c01",
+     "text": "REPORT BY = Appointment (the captured default; legacy report New Patient Thru Appointment) lists patients who have only a \"New Patient\" appointment and have not been activated into a full patient record - scheduler placeholders, not patient records."
+    },
+    {
+     "about": "meaning",
+     "control_id": "patients_list_reports.r03.s01.c01",
+     "text": "The value Created Date / First Visit Date names the two report definitions of a new patient: Created Date = the date the record was entered; First Visit Date = the first date a procedure was posted as completed. (How the screen lets the user choose between the two dates is not visible - see unresolved.)"
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "patients_list_reports.r04",
+   "legacy_name": "Patients Seen",
+   "report_key": "lists.patients_seen",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "patients_list_reports.r04.s01.c01",
+     "signature_id": "sig0196",
+     "legacy_section": "REPORT BY",
+     "legacy_label": "",
+     "legacy_type": "dropdown",
+     "legacy_options": [],
+     "legacy_default": "Day",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "unknown_legacy",
+     "param": "report_by",
+     "param_type": "enum",
+     "option_map": {},
+     "default": "day",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Static dropdown captured collapsed: only the default Day is known. Expected values from the four folded legacy reports (inferred, research 'Patients Seen'): Day (Patients Seen Per Day), by age in 10-year bands (Patients Seen Per Day By Age), by medical alert (Patients Seen by Medical Alerts), by zip code (Patients Seen by Zip code); candidate keys day, age, medical_alert, zip_code. Expand the list on the live tool and record labels, order and whether any value swaps criteria.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r04.s02.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "patients_list_reports.r04.s03.c01",
+     "signature_id": "sig0218",
+     "legacy_section": "REPORT TYPE",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Summary",
+      "Detail"
+     ],
+     "legacy_default": "Summary",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "report_format",
+     "param_type": "enum",
+     "option_map": {
+      "Summary": "summary",
+      "Detail": "detail"
+     },
+     "default": "summary",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "REPORT TYPE with Summary / Detail is the report format spelled differently."
+    },
+    {
+     "control_id": "patients_list_reports.r04.s04.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "patients_list_reports.r04.s04.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in (default token working_office). Office attribution on this report: office of the visit (rpt_visits.office_id / rpt_provider_visits.office_id = office of service of the visit-code charges). Mode office lists offices, mode office_group lists office groups; all = every office the caller may read.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r04.s05.c01",
+     "signature_id": "sig0004",
+     "legacy_section": "PROVIDER",
+     "legacy_label": "Provider",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Provider role on this report: provider of the visit (rpt_provider_visits.provider_id = every provider who charged a visit code that day; data_card 5.2). With all the count reads rpt_visits (distinct patients); with a list it reads rpt_provider_visits, so a patient seen by two selected providers on one day counts once per provider row but once in the distinct total. Legacy role (transaction provider) is inferred - confirm on the live tool.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r04.s06.c01",
+     "signature_id": "sig0225",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Transaction Date",
+      "DOS Date"
+     ],
+     "legacy_default": "Transaction Date",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "date_basis",
+     "param_type": "enum",
+     "option_map": {
+      "Transaction Date": "transaction_date",
+      "DOS Date": "service_date"
+     },
+     "default": "transaction_date",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "patients_list_reports.r04.s06.c02",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range; date_basis is fixed per report or chosen by the basis radio of the same section. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "patients_list_reports.r04.s06.c03",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range, inclusive end. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "other",
+     "control_id": "",
+     "text": "Population rule with no criteria control: the vendor states that Patients Seen does not consider missed or cancelled appointments."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "patients_list_reports.r05",
+   "legacy_name": "Patient's Notes",
+   "report_key": "lists.patients_notes",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "patients_list_reports.r05.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "patients_list_reports.r05.s02.c01",
+     "signature_id": "sig0226",
+     "legacy_section": "PRINT NOTES",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "note_type_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Vendor documentation: the picker selects the note types to print (list starts ALL, Patient Notes, Resp. Party Notes; the printed Note Type column shows Patient Notes, Responsible Party Notes, Financial Notes, Chart Notes; footer echo Note Type, blank when all). Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool."
+    },
+    {
+     "control_id": "patients_list_reports.r05.s03.c01",
+     "signature_id": "sig0170",
+     "legacy_section": "PATIENT",
+     "legacy_label": "Patient",
+     "legacy_type": "text_input",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "patient_id",
+     "param_type": "entity_single",
+     "option_map": {},
+     "default": null,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Mandatory single patient (vendor documentation: type the last name, search, pick); the report prints the notes of that one patient and has no office filter. Required, no all, no list. Empty by default as captured; the patient in context is offered as the first suggestion, never pre-filled silently. Differs from the shared mapping: Same box as the optional patient filter of Audit Trail (sig0170), different meaning: optional filter with all there, one required patient here.",
+     "shared_override": true
+    },
+    {
+     "control_id": "patients_list_reports.r05.s03.c02",
+     "signature_id": "sig0171",
+     "legacy_section": "PATIENT",
+     "legacy_label": "SEARCH",
+     "legacy_type": "button",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "superseded",
+     "param": "patient_id.search",
+     "param_type": "action",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Superseded by the lookup built into the bound control: typing searches (typeahead) and the search icon opens the full search dialog; no separate button. Differs from the shared mapping: SEARCH button of the single-patient box of Patient's Notes (parameter patient_id, not patient_ids).",
+     "shared_override": true
+    },
+    {
+     "control_id": "patients_list_reports.r05.s04.c01",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range, fixed basis created date of the note (patient_notes created_at as office-local date; app-era notes only). Migrated account_notes have no note-date column and their created_at is the load time (created_at_reliable = false): they are outside the date predicate and print only with the enhancement include_undated_migrated_notes (Date Created '-'). Default today in the office time zone.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r05.s04.c02",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range, inclusive end, fixed basis created date of the note (app-era notes; migrated account_notes are undated and outside the predicate). Default today in the office time zone.",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "patients_list_reports.r05.s02.c01",
+     "text": "PRINT NOTES selects the note types to print (ALL = every type). The list box of the 2020 screen starts ALL, Patient Notes, Resp. Party Notes; the rest of the list is not documented (see the picker entry and unresolved). The evidence is the 2020 screen, where the selector was a list box; on the current screen it is a read-only box with SELECT."
+    },
+    {
+     "about": "meaning",
+     "control_id": "patients_list_reports.r05.s03.c01",
+     "text": "A single patient is mandatory. The Patient box takes typing: type the last name, press SEARCH, then pick the patient."
+    },
+    {
+     "about": "meaning",
+     "control_id": "patients_list_reports.r05.s04.c01",
+     "text": "DATE RANGE (Start Date / End Date) is matched on the note's created date."
+    }
+   ],
+   "shared_rules": [
+    {
+     "param": "patient_id",
+     "field": "required_when",
+     "when": "true",
+     "evidence": "documented",
+     "note": "Mandatory single patient."
+    }
+   ],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "patients_list_reports.r06",
+   "legacy_name": "Patient List - Grouped By",
+   "report_key": "lists.patient_list_grouped_by",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "patients_list_reports.r06.s01.c01",
+     "signature_id": "sig0196",
+     "legacy_section": "REPORT BY",
+     "legacy_label": "",
+     "legacy_type": "dropdown",
+     "legacy_options": [
+      "Birthdate",
+      "Carrier",
+      "Employer",
+      "Fee Schedule",
+      "HIPAA Agreement",
+      "Insurance Plan",
+      "Last Visit",
+      "Medical Alert",
+      "Patient Type",
+      "Preferred Provider",
+      "Uninsured",
+      "Zip Code"
+     ],
+     "legacy_default": "Attached to Provider",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "vendor_doc_options": [
+      "Birthdate",
+      "Carrier",
+      "Employer",
+      "Fee Schedule",
+      "HIPAA Agreement",
+      "Insurance Plan",
+      "Last Visit",
+      "Medical Alert",
+      "Patient Type",
+      "Preferred Provider",
+      "Uninsured",
+      "Zip Code"
+     ],
+     "status": "replicated",
+     "param": "report_by",
+     "param_type": "enum",
+     "option_map": {
+      "Attached to Provider": "attached_to_provider",
+      "Birthdate": "birthdate",
+      "Carrier": "carrier",
+      "Employer": "employer",
+      "Fee Schedule": "fee_schedule",
+      "HIPAA Agreement": "hipaa_agreement",
+      "Insurance Plan": "insurance_plan",
+      "Last Visit": "last_visit",
+      "Medical Alert": "medical_alert",
+      "Patient Type": "patient_type",
+      "Preferred Provider": "preferred_provider",
+      "Uninsured": "uninsured",
+      "Zip Code": "zip_code"
+     },
+     "default": "attached_to_provider",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "All 13 values read from vendor screenshots, not from our capture: re-check on the live tool. The criteria panel changes with the value; only the modes Attached to Provider and Last Visit were seen. Differs from the shared mapping: REPORT BY list of Patient List - Grouped By is known from vendor documentation; the signature itself stays unknown_legacy.",
+     "shared_override": true
+    },
+    {
+     "control_id": "patients_list_reports.r06.s02.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "patients_list_reports.r06.s03.c01",
+     "signature_id": "sig0219",
+     "legacy_section": "PATIENT STATUS",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Active",
+      "Inactive",
+      "Both"
+     ],
+     "legacy_default": "Active",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "patient_status",
+     "param_type": "enum",
+     "option_map": {
+      "Active": "active",
+      "Inactive": "inactive",
+      "Both": "both"
+     },
+     "default": "active",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "patients_list_reports.r06.s04.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "patients_list_reports.r06.s04.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in (default token working_office). Office attribution on this report: home office of the patient (rpt_patient_dim.home_office_id, current state; inferred). Mode office lists offices, mode office_group lists office groups; all = every office the caller may read.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r06.s05.c01",
+     "signature_id": "sig0004",
+     "legacy_section": "PROVIDER",
+     "legacy_label": "Provider",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Provider role on this report (report_by = attached_to_provider and the other modes that keep the PROVIDER section): scope.provider_attribution = attached (NEW role, owner 04 section 3 and 03 section 5.2: coalesce(rpt_patient_dim.preferred_provider_id, rpt_patient_activity.last_visit_provider_id)); the fallback is labelled on history (coverage 78a: no provider is attached to migrated patients). In mode preferred_provider the same picker filters rpt_patient_dim.preferred_provider_id only (the group key of that mode). How Attached to Provider differs from mode Preferred Provider is not documented - confirm on the live tool. Hidden when report_by = last_visit (04 shared rule).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r06.s06.c01",
+     "signature_id": "sig0220",
+     "legacy_section": "INCLUDE PATIENT TYPE",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "include_patient_type_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool."
+    },
+    {
+     "control_id": "patients_list_reports.r06.s07.c01",
+     "signature_id": "sig0007",
+     "legacy_section": "EXCLUDE PATIENT TYPE",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "None",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "exclude_patient_type_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "none",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Exclude filter: None = exclude nothing; rows whose value is in the list are dropped. Dialog content was never captured - confirm on the live tool. Vendor documentation describes this option as an include filter on Special Transaction Report - confirm."
+    },
+    {
+     "control_id": "patients_list_reports.r06.s08.c01",
+     "signature_id": "sig0227",
+     "legacy_section": "SPECIALTY",
+     "legacy_label": "",
+     "legacy_type": "dropdown",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "specialty_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Specialty of the provider resolved as for provider_ids (attached provider; preferred provider in mode preferred_provider), not of a referral source. rpt_provider_dim.specialty is free text: codes of the specialties option source match it through a NEW rpt_value_map domain specialty (owner 03); blank on 96 of 97 migrated providers (availability provider_specialty_sparse). Legacy single-select; the parameter accepts a list (enhancement). Hidden when report_by = last_visit (04 shared rule). Confirm the list source on the live tool.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r06.x01",
+     "signature_id": null,
+     "legacy_section": "PREFERRED PROVIDER",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Preferred Provider",
+      "Treating Provider"
+     ],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "vendor_doc",
+     "vendor_doc_confidence": "confirmed",
+     "vendor_doc_evidence": "`Last Visit` | `PATIENT STATUS`; `OFFICE/GROUP`; `PREFERRED PROVIDER` with radio `Preferred Provider` / `Treating Provider`",
+     "legacy_notes": "Appears only when REPORT BY = Last Visit (our capture shows the default mode, Attached to Provider). Read by the research pass from vendor screenshots of the Last Visit mode (2022 and 2023). The radio chooses which provider relation the provider filter of this mode uses. Which option is preselected is not documented.",
+     "status": "replicated",
+     "param": "provider_basis",
+     "param_type": "enum",
+     "option_map": {
+      "Preferred Provider": "preferred_provider",
+      "Treating Provider": "treating_provider"
+     },
+     "default": "preferred_provider",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "04 shared vendor-doc parameter provider_basis with a per-report option list: option treating_provider is NEW (04 section 3 to add; the Aging reports list preferred_provider / transaction_provider). preferred_provider -> the picker and the group key read rpt_patient_dim.preferred_provider_id (no fallback; patients without one under (No Preferred Provider)); treating_provider -> both read the provider of the last visit (rpt_patient_activity.last_visit_provider_id). Visible only when report_by = last_visit. Legacy preselection is not documented by the vendor screenshots; 04 sets preferred_provider (first option) - confirm on the live tool.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r06.x02",
+     "signature_id": null,
+     "legacy_section": "PREFERRED PROVIDER",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "vendor_doc",
+     "vendor_doc_confidence": "likely",
+     "vendor_doc_evidence": "`PROVIDER` / `PREFERRED PROVIDER` | Provider multi-select. Which provider relation is used depends on the report; in `Last Visit` mode a radio chooses `Preferred Provider` or `Treating Provider`.",
+     "legacy_notes": "Appears only when REPORT BY = Last Visit (our capture shows the default mode, Attached to Provider). In that mode the PREFERRED PROVIDER block takes the place of the PROVIDER section. The document describes PREFERRED PROVIDER as a provider multi-select and reports the block from the vendor screenshots of the mode, but quotes neither the row label nor the default of the box (on Patients on Payment Plan the PREFERRED PROVIDER picker is labelled Preferred Provider and shows ALL).",
+     "status": "replicated_enhanced",
+     "param": "preferred_provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PREFERRED PROVIDER picker of mode Last Visit. Shared preferred_provider_ids (lookup:providers, all = no restriction; legacy pickers default to Include All, vendor article on the new reports). Its provider_role is switched by provider_basis on this report (preferred -> preferred provider; treating_provider -> last-visit provider): an extension of the shared definition that 04 must record. Not provider_ids, which 04 hides in this mode. Visible only when report_by = last_visit. Row label and default were not quoted by the vendor screenshots - confirm on the live tool.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r06.x03",
+     "signature_id": null,
+     "legacy_section": "LAST VISIT DATE RANGE",
+     "legacy_label": "",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "vendor_doc",
+     "vendor_doc_confidence": "confirmed",
+     "vendor_doc_evidence": "`Last Visit` | `PATIENT STATUS`; `OFFICE/GROUP`; `PREFERRED PROVIDER` with radio `Preferred Provider` / `Treating Provider`; `LAST VISIT DATE RANGE`",
+     "legacy_notes": "Appears only when REPORT BY = Last Visit (our capture shows the default mode, Attached to Provider). A date range on the Last Visit date of the patient record (two date boxes, recorded as one control). The document quotes the section title only: row labels and defaults are not quoted (the same header, re-used on Provider Holidays, carries Start Date / End Date in our capture).",
+     "status": "replicated_enhanced",
+     "param": "last_visit_date",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "The vendor capture of mode Last Visit shows the box empty; research section 3.1 states every date box of the Lists screens defaults to the current day. Interim today / today until the live tool shows otherwise.",
+     "enabled_when": "",
+     "notes": "04 shared vendor-doc parameter last_visit_date (value keys last_visit_date_from, last_visit_date_to, last_visit_date_preset): attribute range on the general last visit of the patient (rpt_patient_activity.last_visit_date, last visit-code charge; REPAIR(19) until patients.last_visit is maintained), inclusive, office-local dates; not the ortho last visit. Visible only when report_by = last_visit. Default today / today (date_preset today) per the cross-cutting legacy rule 'every date box defaults to the current day' (research 3.1) and the Provider Holidays capture of the same header - inferred, confirm on the live tool. Enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r06.x04",
+     "signature_id": null,
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include Patients with No Lastvisit date.",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "vendor_doc",
+     "vendor_doc_confidence": "confirmed",
+     "vendor_doc_evidence": "`Last Visit` | `PATIENT STATUS`; `OFFICE/GROUP`; `PREFERRED PROVIDER` with radio `Preferred Provider` / `Treating Provider`; `LAST VISIT DATE RANGE`; `INCLUDE` / `EXCLUDE PATIENT TYPE`; `OTHER OPTIONS` `Include Patients with No Lastvisit date.`",
+     "legacy_notes": "Appears only when REPORT BY = Last Visit (our capture shows the default mode, Attached to Provider). Label exactly as quoted, with 'Lastvisit' as one word and the trailing full stop. Last Visit is a date on the patient record and a patient may have none; the box brings those patients into the list. Its default (ticked or not) is not documented.",
+     "status": "replicated",
+     "param": "include_patients_with_no_last_visit",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": "false",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "04 shared vendor-doc parameter include_patients_with_no_last_visit: true = patients whose last_visit_date is NULL are added to the rows selected by last_visit_date; false = they are left out. Visible only when report_by = last_visit. Legacy default not documented: false (unticked, also the disabled value) is inferred from the research (reactivation users tick the box) - confirm on the live tool.",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "patients_list_reports.r06.d01",
+     "legacy_when": "REPORT BY = Last Visit",
+     "legacy_effect": "The criteria panel becomes: PATIENT STATUS; OFFICE/GROUP; a PREFERRED PROVIDER block with the radio Preferred Provider / Treating Provider; LAST VISIT DATE RANGE; INCLUDE PATIENT TYPE / EXCLUDE PATIENT TYPE; OTHER OPTIONS with the checkbox 'Include Patients with No Lastvisit date.'. The PROVIDER and SPECIALTY sections of the default mode are replaced and no longer shown.",
+     "confidence": "confirmed",
+     "new_behavior": "report_by == last_visit: visible = patient_status, office_scope, provider_basis (radio Preferred Provider / Treating Provider), preferred_provider_ids (the PREFERRED PROVIDER picker, filtering the provider chosen by provider_basis), last_visit_date (last_visit_date_from / _to / _preset), include_patient_type_codes, exclude_patient_type_codes, include_patients_with_no_last_visit. Hidden: provider_ids and specialty_codes (visible_when report_by != last_visit, 04 shared rule); their values are replaced by the disabled_value all before hashing, so a value chosen in another mode never filters a Last Visit run."
+    },
+    {
+     "rule_id": "patients_list_reports.r06.d02",
+     "legacy_when": "REPORT BY = Attached to Provider (the default)",
+     "legacy_effect": "The panel shows PATIENT STATUS; OFFICE/GROUP; PROVIDER; INCLUDE PATIENT TYPE / EXCLUDE PATIENT TYPE; SPECIALTY - the state our screenshot captured, and a vendor screenshot shows the same set. PROVIDER and SPECIALTY belong to this mode (Last Visit replaces them).",
+     "confidence": "confirmed",
+     "new_behavior": "report_by != last_visit (attached_to_provider is the default; the other 11 modes were not captured and keep this panel until read on the live tool): visible = patient_status, office_scope, provider_ids, include_patient_type_codes, exclude_patient_type_codes, specialty_codes. Hidden (visible_when report_by == last_visit): provider_basis, preferred_provider_ids, last_visit_date, include_patients_with_no_last_visit; their disabled values (preferred_provider, all, no range, false) add no predicate."
+    }
+   ],
+   "legacy_corrections": [],
+   "shared_rules": [
+    {
+     "param": "provider_basis",
+     "field": "visible_when",
+     "when": "report_by == last_visit",
+     "evidence": "documented",
+     "note": "Mode Last Visit (vendor screenshots)."
+    },
+    {
+     "param": "last_visit_date",
+     "field": "visible_when",
+     "when": "report_by == last_visit",
+     "evidence": "documented",
+     "note": "Mode Last Visit (vendor screenshots)."
+    },
+    {
+     "param": "include_patients_with_no_last_visit",
+     "field": "visible_when",
+     "when": "report_by == last_visit",
+     "evidence": "documented",
+     "note": "Mode Last Visit (vendor screenshots)."
+    },
+    {
+     "param": "provider_ids",
+     "field": "visible_when",
+     "when": "report_by != last_visit",
+     "evidence": "documented",
+     "note": "Replaced by the PREFERRED PROVIDER block in mode Last Visit; the other 11 modes were not captured (treated as visible)."
+    },
+    {
+     "param": "specialty_codes",
+     "field": "visible_when",
+     "when": "report_by != last_visit",
+     "evidence": "documented",
+     "note": "Replaced by the PREFERRED PROVIDER block in mode Last Visit; the other 11 modes were not captured (treated as visible)."
+    }
+   ],
+   "shared_vendor_doc_parameters": [
+    {
+     "param": "provider_basis",
+     "param_type": "enum",
+     "legacy_control": "PREFERRED PROVIDER > Preferred Provider / Treating Provider (REPORT BY = Last Visit)",
+     "options": "Preferred Provider -> preferred_provider, Treating Provider -> treating_provider",
+     "default": "preferred_provider",
+     "evidence": "documented",
+     "kind": "vendor_doc"
+    },
+    {
+     "param": "last_visit_date",
+     "param_type": "date_range",
+     "legacy_control": "LAST VISIT DATE RANGE (REPORT BY = Last Visit)",
+     "evidence": "documented",
+     "kind": "vendor_doc",
+     "note": "General last visit of the patient (last completed procedure), not the ortho last visit."
+    },
+    {
+     "param": "include_patients_with_no_last_visit",
+     "param_type": "boolean",
+     "legacy_control": "OTHER OPTIONS > Include Patients with No Lastvisit date. (REPORT BY = Last Visit)",
+     "default": "not documented",
+     "evidence": "documented",
+     "kind": "vendor_doc"
+    }
+   ]
+  },
+  {
+   "report_id": "patients_list_reports.r07",
+   "legacy_name": "Patients on Payment Plan",
+   "report_key": "lists.patients_on_payment_plan",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "patients_list_reports.r07.s01.c01",
+     "signature_id": "sig0164",
+     "legacy_section": "PLAN TYPE",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Regular",
+      "Ortho"
+     ],
+     "legacy_default": "Regular",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "plan_type",
+     "param_type": "enum",
+     "option_map": {
+      "Regular": "regular",
+      "Ortho": "ortho"
+     },
+     "default": "regular",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "patients_list_reports.r07.s02.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "patients_list_reports.r07.s03.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "patients_list_reports.r07.s03.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in (default token working_office). Office attribution on this report: office of the contract (rpt_payment_plan_contracts.office_id; inferred - the sample prints one office in the header). Mode office lists offices, mode office_group lists office groups; all = every office the caller may read.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r07.s04.c01",
+     "signature_id": "sig0228",
+     "legacy_section": "PREFERRED PROVIDER",
+     "legacy_label": "Preferred Provider",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "preferred_provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Shared preferred_provider_ids: preferred provider of the patient (rpt_patient_dim.preferred_provider_id, no fallback; migrated patients carry none and match only all). Interim: the group key is the same provider (band 'Provider : <name> : <ShortID>', patients without one under (No Preferred Provider)), per the research inference that PREFERRED PROVIDER is both filter and grouping key. The 2021 Ortho sample header may instead be the contract provider (rpt_payment_plan_contracts.provider_id), offered as the enhancement contract_provider_ids - confirm on the live tool. ALL = no restriction.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r07.s05.c01",
+     "signature_id": "sig0229",
+     "legacy_section": "PLAN SETUP DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range. This legacy section fixes date_basis = plan_setup_date (no basis radio). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "patients_list_reports.r07.s05.c02",
+     "signature_id": "sig0230",
+     "legacy_section": "PLAN SETUP DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range. This legacy section fixes date_basis = plan_setup_date (no basis radio). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "patients_list_reports.r07.s06.c01",
+     "signature_id": "sig0007",
+     "legacy_section": "EXCLUDE PATIENT TYPE",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "None",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "exclude_patient_type_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "none",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Exclude filter: None = exclude nothing; rows whose value is in the list are dropped. Dialog content was never captured - confirm on the live tool. Vendor documentation describes this option as an include filter on Special Transaction Report - confirm."
+    },
+    {
+     "control_id": "patients_list_reports.r07.s07.c01",
+     "signature_id": "sig0231",
+     "legacy_section": "CREDIT CARD ON FILE",
+     "legacy_label": "",
+     "legacy_type": "dropdown",
+     "legacy_options": [],
+     "legacy_default": "Both",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "unknown_legacy",
+     "param": "credit_card_on_file",
+     "param_type": "enum",
+     "option_map": {},
+     "default": "both",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Static dropdown captured collapsed: only the default Both is known. Expected options Both / Yes / No (inferred from the CC On File column YES / NO of the 2021 sample); candidate values both / yes / no on rpt_payment_plan_contracts.has_card_on_file. Expand the list on the live tool and record every option and its order.",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "patients_list_reports.r07.s01.c01",
+     "text": "PLAN TYPE selects the kind of contract that is listed: Regular = patients on a regular payment contract (legacy report Patients on Regular Payment Plan), Ortho = patients on an orthodontic contract (legacy report Patients on Ortho Payment Plan)."
+    },
+    {
+     "about": "meaning",
+     "control_id": "patients_list_reports.r07.s05.c01",
+     "text": "PLAN SETUP DATE RANGE (Start Date / End Date) is matched on the setup date of the contract: the report lists patients whose regular or orthodontic contract was set up within the range."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "patients_list_reports.r08",
+   "legacy_name": "Online Registered Patients",
+   "report_key": "lists.online_registered_patients",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "patients_list_reports.r08.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "patients_list_reports.r08.s02.c01",
+     "signature_id": "sig0218",
+     "legacy_section": "REPORT TYPE",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Summary",
+      "Detail"
+     ],
+     "legacy_default": "Summary",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "report_format",
+     "param_type": "enum",
+     "option_map": {
+      "Summary": "summary",
+      "Detail": "detail"
+     },
+     "default": "summary",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "REPORT TYPE with Summary / Detail is the report format spelled differently."
+    },
+    {
+     "control_id": "patients_list_reports.r08.s03.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "patients_list_reports.r08.s03.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in (default token working_office). Office attribution on this report: office the online registration was addressed to (booking_requests office; vendor text: registrations per office). Mode office lists offices, mode office_group lists office groups; all = every office the caller may read.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r08.s04.c01",
+     "signature_id": "sig0232",
+     "legacy_section": "CREATED DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range. This legacy section fixes date_basis = created_date (no basis radio). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "patients_list_reports.r08.s04.c02",
+     "signature_id": "sig0233",
+     "legacy_section": "CREATED DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range. This legacy section fixes date_basis = created_date (no basis radio). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "patients_list_reports.r08.s04.c01",
+     "text": "CREATED DATE RANGE (Start Date / End Date) is matched on the date the online registration was received: the report lists all online patient registrations received during the range, per office."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "patients_list_reports.r09",
+   "legacy_name": "Responsible Party List",
+   "report_key": "lists.responsible_party_list",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "patients_list_reports.r09.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "patients_list_reports.r09.s02.c01",
+     "signature_id": "sig0196",
+     "legacy_section": "REPORT BY",
+     "legacy_label": "",
+     "legacy_type": "dropdown",
+     "legacy_options": [
+      "Balance",
+      "Balance Aged Over X Days",
+      "Resp. Party Type",
+      "Send Statement Status",
+      "Zip"
+     ],
+     "legacy_default": "Created Date",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "vendor_doc_options": [
+      "Balance",
+      "Balance Aged Over X Days",
+      "Resp. Party Type",
+      "Send Statement Status",
+      "Zip"
+     ],
+     "status": "replicated",
+     "param": "report_by",
+     "param_type": "enum",
+     "option_map": {
+      "Balance": "balance",
+      "Balance Aged Over X Days": "balance_aged_over_x_days",
+      "Created Date": "created_date",
+      "Resp. Party Type": "resp_party_type",
+      "Send Statement Status": "send_statement_status",
+      "Zip": "zip"
+     },
+     "default": "created_date",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Six values from vendor documentation, not from our capture: re-check on the live tool. Send Statement Status and Balance Aged Over X Days swap criteria. Differs from the shared mapping: REPORT BY list of Responsible Party List is known from vendor documentation; the signature itself stays unknown_legacy.",
+     "shared_override": true
+    },
+    {
+     "control_id": "patients_list_reports.r09.s03.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "patients_list_reports.r09.s03.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in (default token working_office). Office attribution on this report: home office of the guarantor account (rpt_account_dim.home_office_id; data_card 5.1, home office for A/R and statements, PD-4 home-office variant). Mode office lists offices, mode office_group lists office groups; all = every office the caller may read.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r09.s04.c01",
+     "signature_id": "sig0232",
+     "legacy_section": "CREATED DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range, fixed basis created date of the guarantor account (rpt_account_dim.created_at_utc as office-local date). Applies in every report_by mode except send_statement_status. That it also applies in mode balance_aged_over_x_days rests on an older (2021) build screen; the current aged panel was never seen - inferred, confirm on the live tool. Migrated accounts carry the back-fill time: REPAIR(10). Default today in the office time zone.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r09.s04.c02",
+     "signature_id": "sig0233",
+     "legacy_section": "CREATED DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range, inclusive end, fixed basis account created date; hidden when report_by = send_statement_status. Default today in the office time zone.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r09.s05.c01",
+     "signature_id": "sig0138",
+     "legacy_section": "EXCLUDE RESPONSIBLE PARTY TYPE",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "None",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "exclude_resp_party_type_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "none",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Exclude filter: None = exclude nothing; rows whose value is in the list are dropped. Dialog content was never captured - confirm on the live tool."
+    },
+    {
+     "control_id": "patients_list_reports.r09.s06.c01",
+     "signature_id": "sig0234",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include Inactive Accounts (All patients inactive in account)",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_inactive_accounts",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Inactive account = an account in which every member patient is inactive (rpt_account_dim.active_member_count = 0). false (legacy default, unticked) = such accounts are left out; true = they are listed too. Not the patient-level include_inactive_patients.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r09.x01",
+     "signature_id": null,
+     "legacy_section": "SEND STATEMENT STATUS",
+     "legacy_label": "",
+     "legacy_type": "dropdown",
+     "legacy_options": [
+      "Yes",
+      "No"
+     ],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "vendor_doc",
+     "vendor_doc_confidence": "confirmed",
+     "vendor_doc_evidence": "`Send Statement Status` | `Responsible Party-Send Statement Status` | Accounts eligible / ineligible to receive a statement | Date range replaced by `SEND STATEMENT STATUS` (`Yes` / `No`); `EXCLUDE RESPONSIBLE PARTY TYPE`; inactive-accounts checkbox",
+     "legacy_notes": "Appears only when REPORT BY = Send Statement Status, where it takes the place of CREATED DATE RANGE (our capture shows the default mode, Created Date). Read by the research pass from a 2023 vendor screenshot of that mode; the document calls it a dropdown. It filters on the Send Statement flag of the responsible party; documented use: choose No before a statement run to list the accounts that will get no statement. Default not documented.",
+     "status": "replicated",
+     "param": "send_statement_status",
+     "param_type": "enum",
+     "option_map": {
+      "Yes": "yes",
+      "No": "no"
+     },
+     "default": "yes",
+     "default_differs_reason": "A legacy dropdown always shows one value; the default is not documented. yes (first option) is preselected - INFERRED, confirm on the live tool.",
+     "enabled_when": "",
+     "notes": "04 shared vendor-doc parameter send_statement_status: yes = accounts flagged to receive statements (rpt_account_dim.send_statements true), no = accounts not flagged (documented use: list before a statement run the accounts that will get no statement). Visible and required only when report_by = send_statement_status, where it replaces the created date range. Default yes (first option) - INFERRED, confirm on the live tool.",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "patients_list_reports.r09.d01",
+     "legacy_when": "REPORT BY = Send Statement Status",
+     "legacy_effect": "The CREATED DATE RANGE section is replaced by a SEND STATEMENT STATUS dropdown (Yes / No); EXCLUDE RESPONSIBLE PARTY TYPE and the inactive-accounts checkbox (Include Inactive Accounts (All patients inactive in account)) stay.",
+     "confidence": "confirmed",
+     "new_behavior": "report_by == send_statement_status: send_statement_status becomes visible and required (required_when report_by == send_statement_status); date_range is hidden (visible_when report_by != send_statement_status, 04 shared rule) and no created-date predicate is applied; exclude_resp_party_type_codes and include_inactive_accounts stay visible. In every other mode send_statement_status is hidden and adds no predicate. report_by == balance_aged_over_x_days additionally shows aged_balance (aged_balance_from / _to, default 1.00 / 999999.99) and aging_days (04 shared vendor-doc parameters; no control of our capture, specified in the report section)."
+    }
+   ],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "patients_list_reports.r09.s05.c01",
+     "text": "The responsible party type is the account's billing type: every account has exactly one, and it is mandatory (examples: Cash, Collections, Discount Plan, No Type Defined)."
+    }
+   ],
+   "shared_rules": [
+    {
+     "param": "send_statement_status",
+     "field": "visible_when",
+     "when": "report_by == send_statement_status",
+     "evidence": "documented"
+    },
+    {
+     "param": "date_range",
+     "field": "visible_when",
+     "when": "report_by != send_statement_status",
+     "evidence": "documented",
+     "note": "The date range is replaced by SEND STATEMENT STATUS in that mode."
+    },
+    {
+     "param": "aged_balance",
+     "field": "visible_when",
+     "when": "report_by == balance_aged_over_x_days",
+     "evidence": "documented"
+    },
+    {
+     "param": "aging_days",
+     "field": "visible_when",
+     "when": "report_by == balance_aged_over_x_days",
+     "evidence": "documented"
+    }
+   ],
+   "shared_vendor_doc_parameters": [
+    {
+     "param": "send_statement_status",
+     "param_type": "enum",
+     "legacy_control": "SEND STATEMENT STATUS (REPORT BY = Send Statement Status)",
+     "options": "Yes -> yes, No -> no",
+     "default": "not documented",
+     "evidence": "documented",
+     "kind": "vendor_doc",
+     "note": "Replaces the date range in that mode."
+    },
+    {
+     "param": "aged_balance",
+     "param_type": "number_range",
+     "legacy_control": "Aged Balance range Start / End (REPORT BY = Balance Aged Over X Days)",
+     "default": "1.00 / 999999.99",
+     "evidence": "documented",
+     "kind": "vendor_doc"
+    },
+    {
+     "param": "aging_days",
+     "param_type": "enum",
+     "legacy_control": "days 30 / 60 / 90 / 120 (REPORT BY = Balance Aged Over X Days)",
+     "options": "30 -> 30, 60 -> 60, 90 -> 90, 120 -> 120",
+     "default": "not documented",
+     "evidence": "documented",
+     "kind": "vendor_doc"
+    }
+   ]
+  },
+  {
+   "report_id": "patients_list_reports.r10",
+   "legacy_name": "Responsible Party - Sent to Collection",
+   "report_key": "lists.responsible_party_sent_to_collection",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "patients_list_reports.r10.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "patients_list_reports.r10.s02.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "patients_list_reports.r10.s02.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in (default token working_office). Office attribution on this report: home office of the guarantor account (rpt_account_dim.home_office_id). Mode office lists offices, mode office_group lists office groups; all = every office the caller may read.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r10.s03.c01",
+     "signature_id": "sig0235",
+     "legacy_section": "ACCOUNT BALANCE RANGE",
+     "legacy_label": "Start",
+     "legacy_type": "number_input",
+     "legacy_options": [],
+     "legacy_default": "0.00",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "account_balance_from",
+     "param_type": "number_range",
+     "option_map": {},
+     "default": "0.00",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Lower bound, inclusive, on the current account balance of the canonical ledger layer (PD-2, PD-4: rpt_ar_open_items unit account). Population = accounts with rpt_account_dim.send_collections true. Inferred: 0.00 is a real bound, so credit-balance accounts are not listed by the default run (unlike the age range, no open-bound rule is documented) - confirm on the live tool.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r10.s03.c02",
+     "signature_id": "sig0236",
+     "legacy_section": "ACCOUNT BALANCE RANGE",
+     "legacy_label": "End",
+     "legacy_type": "number_input",
+     "legacy_options": [],
+     "legacy_default": "999999.99",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "account_balance_to",
+     "param_type": "number_range",
+     "option_map": {},
+     "default": "999999.99",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Upper bound, inclusive, on the current account balance. Inferred: 999999.99 is the practical open bound. Confirm on the live tool.",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "patients_list_reports.r11",
+   "legacy_name": "Responsible Party - Statements Sent",
+   "report_key": "lists.responsible_party_statements_sent",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "patients_list_reports.r11.s01.c01",
+     "signature_id": "sig0237",
+     "legacy_section": "STATEMENT TYPE",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Paper",
+      "Email",
+      "Both"
+     ],
+     "legacy_default": "Paper",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "statement_type",
+     "param_type": "enum",
+     "option_map": {
+      "Paper": "paper",
+      "Email": "email",
+      "Both": "both"
+     },
+     "default": "paper",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Delivery channel: paper = patient_statements.delivery_method print, or NULL with delivery_status generated (generated, not yet marked) - inferred; email = delivery_method email and not failed; both = no channel restriction (download rows appear only here). Whether downloaded portal statements count as Paper is not documented - confirm. Email and Both are greyed in the only capture; 04 9.4 keeps them enabled (option_enabled_when unknown) until read on the live tool - candidate rule: the organisation e-statement feature. Default paper as captured.",
+     "option_enabled_when": {
+      "email": "unknown",
+      "both": "unknown"
+     },
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r11.s02.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "patients_list_reports.r11.s03.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "patients_list_reports.r11.s03.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in (default token working_office). Office attribution on this report: coalesce(statement_runs.office_id, patient_statements.office_id, rpt_account_dim.home_office_id) - office of the statement run, else the office stored on the statement row, else the account home office (data_card 5.1; inferred). Mode office lists offices, mode office_group lists office groups; all = every office the caller may read.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r11.s04.c01",
+     "signature_id": "sig0238",
+     "legacy_section": "STATEMENT DATE",
+     "legacy_label": "Statement Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "statement_date",
+     "param_type": "date",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Single date, role filter_equals: equality with patient_statements.statement_date of the stored statement rows; statement_type filters patient_statements.delivery_method. Default today in the office time zone.",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "patients_list_reports.r11.s04.c01",
+     "text": "The single Statement Date identifies the statement run: the report lists the accounts for which a statement was generated on that statement date, so it has to equal the date of the run."
+    },
+    {
+     "about": "meaning",
+     "control_id": "patients_list_reports.r11.s01.c01",
+     "text": "STATEMENT TYPE is the delivery channel of the statement. It mirrors the statement formats Paper / Email / Both of Statement Setup (Only Paper / Only Email / Email & Paper on the 2014 Statements screen). Why Email and Both are greyed in our capture is not documented (see unresolved)."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "patients_list_reports.r12",
+   "legacy_name": "Responsible Party - Email Statement Error Report",
+   "report_key": "lists.responsible_party_email_statement_error_report",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "patients_list_reports.r12.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "patients_list_reports.r12.s02.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "patients_list_reports.r12.s02.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in (default token working_office). Office attribution on this report: coalesce(statement_runs.office_id, patient_statements.office_id, rpt_account_dim.home_office_id) - office of the statement run, else the office stored on the statement row, else the account home office (data_card 5.1; inferred). Mode office lists offices, mode office_group lists office groups; all = every office the caller may read.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "patients_list_reports.r12.s03.c01",
+     "signature_id": "sig0239",
+     "legacy_section": "STATEMENT SENT DATE",
+     "legacy_label": "Statement Sent Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "statement_sent_date",
+     "param_type": "date",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Single date. Binding inferred: office-local date of NEW patient_statements.delivery_attempted_at (timestamp written by the e-statement handler, RPT-PLIST-55 / DATA-22 / RPT-STMT-23) on rows with delivery_method email and the NEW delivery_status 'failed'; delivered_at is a date and is set only on success. The vendor says e-statements are sent three days after the statement date, so the date is not the statement date. Confirm on the live tool. Default today in the office time zone.",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  }
+ ]
+}

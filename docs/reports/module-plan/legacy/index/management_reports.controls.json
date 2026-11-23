@@ -1,0 +1,614 @@
+{
+ "category": "management_reports",
+ "window_title": "Management Reports",
+ "report_list": [
+  "Payment Plan Charges",
+  "Uncollected Copay",
+  "Audit Trail",
+  "Time Clock Report"
+ ],
+ "reports_without_screenshot": [],
+ "observations": "Third-reader verified inventory. All 4 original screenshots, the 8 pre-rendered zooms and additional tight crops (prefix c in the zoom folder) were read. Readers A and B agreed on every report, section, option, default value, enabled state and truncation flag; their differences were descriptive only (B alone recorded the size of 3.PNG and the RGB fill values, A hedged the G/C header glyph). One typing change was made against both readers: the Audit Trail Patient box has the light editable-field fill, so it is recorded as text_input with its SEARCH button as a separate button control (the convention already used in daily_reports.json and ledger_reports.json) instead of one picker - 31 controls instead of their 30. A pixel-cluster sweep of every screenshot (every pixel that is not one of the flat background colours, run with and without tolerance) found nothing beyond the items listed here: no tiny right-edge checkbox (no 'Page Break'), no extra greyed-out control, no instruction or legend text, no second list column, no scrollbar on either panel, no footer text. COVERAGE: 4 screenshots = 4 reports, each selected exactly once (blue radio dot located by pixel count): 1.PNG = Payment Plan Charges, 2.PNG = Uncollected Copay, 3.PNG = Audit Trail, 4.PNG = Time Clock Report, i.e. list order; every listed report has a screenshot. All four are the normal two-panel screen in its default state - no popup, no expanded dropdown, no scrolled second view, no foreign screen - so the Office / Office Group and User SELECT dialogs, the patient SEARCH dialog and the option lists of the Audit Type and Module Type dropdowns are NOT documented by this category. SCREEN CHROME (identical in all 4): dark title bar with 'Management Reports' at the left and 'PGID :2829 / OID :108' followed by a white printer icon (icon only, no text) at the far right. Blue sub-header bar: 'SELECT REPORT' over the left panel, 'REPORT CRITERIA' over the right panel with the grey-styled CLEAR CRITERIA button (refresh icon) at its right end (the same grey styling as in the other categories, i.e. not a disabled state). A splitter / collapse grip (three dots in a dark notch) sits on the border between the two panels at mid height. The action bar at the bottom of the criteria panel holds the blue PRINT / PREVIEW (printer icon) and ADD TO MY FAVORITES (plus icon) buttons, right-aligned. Below the panels there is only an empty grey strip; 2.PNG and 4.PNG show a full-width 1 px darker line in it (host-page chrome), no text. LEFT PANEL 'SELECT REPORT': a SINGLE column of exactly 4 radio rows separated by thin white lines (no second column in this category); the rest of the panel is uniform empty navy down to the window edge, so the list is NOT scrollable or clipped. NO TRUNCATION: in every screenshot the first section header is fully visible under the panel border and the last criteria row is followed by 161 to 207 px of uniform blank space down to the action bar. RECURRING PATTERNS: (1) OFFICE/GROUP on all 4 reports = radios Office (selected) / Office Group (enabled) plus an unlabelled read-only box '108' (the current office, same number as the OID in the title bar) with a blue SELECT button (building icon); it is full width on Payment Plan Charges and Uncollected Copay and the left half of a two-column block (beside USER) on Audit Trail and Time Clock Report. (2) USER (Audit Trail and Time Clock Report only) = row 'User' with a read-only box showing ALL and a blue SELECT button (person-plus icon), with an empty second row beneath it. (3) Dates: every date field shows 11/21/2026 (MM/DD/YYYY, the capture day, i.e. the default appears to be today) with a calendar icon inside the box; Payment Plan Charges has a single 'Billing Date' under REPORT DATE, the other three have Start Date / End Date under DATE RANGE. (4) PRINT FORMAT (PDF selected / Excel) exists only on Payment Plan Charges and Uncollected Copay; Audit Trail and Time Clock Report show no PRINT FORMAT section at all. (5) REPORT FORMAT exists only on Uncollected Copay (Detail / Summary) and Time Clock Report (Detail / Summary / Employee Total Only), Detail selected on both. (6) Report-specific options: Payment Plan Charges = PLAN TYPE Regular / Ortho plus the three checkboxes Ortho Patient / Ortho Primary / Ortho Secondary; Uncollected Copay = 'Patient Balance Greater Than' amount (0.00); Audit Trail = Patient lookup plus the Audit Type and Module Type dropdowns (both ALL); Time Clock Report = 'Group By Office' checkbox. ABSENT in this category: PROVIDER picker, PATIENT TYPE, TRANSACTION TYPES, GROUP BY and SORT BY sections, listboxes, Page Break checkboxes. DISABLED STATES (confirmed by pixel colour: greyed labels and checkbox borders are RGB 161 with a 209 box fill, enabled labels are black and enabled buttons blue 41,134,220): Ortho Patient, Ortho Primary and Ortho Secondary on Payment Plan Charges (captured with Plan Type = Regular) and Group By Office on Time Clock Report (captured with Office and the single office 108). What enables them is not shown; that Ortho enables the first three and that Office Group / several offices enables the last is an inference from the labels. Every other control - including every Office Group radio and every SELECT / SEARCH button - is enabled. VISUAL CONVENTION: read-only picker boxes (office 108, User ALL) are grey (220,223,226); editable fields - the date boxes, the balance box, the two dropdowns and the Audit Trail Patient box - are lighter (241,241,241). RENDERING CAVEAT: in the bold section-header font the capital G shows almost no crossbar at this resolution, so the headers look like 'OFFICE/CROUP' and 'DATE RANCE'; the pixel dump shows the G spur and the mixed-case labels 'Office Group' and 'Group By Office' show a clear G, so they are transcribed as OFFICE/GROUP and DATE RANGE. Layout seam: a 1 px line of panel background separates the REPORT DATE block from the PLAN TYPE header (1.PNG) and the DATE RANGE block from the PATIENT header (3.PNG); nothing is drawn in it. Screenshot sizes: 1366x590, 1366x591, 1364x586, 1366x590 px (3.PNG is shifted 2 px left; same content layout). No reading needed a '[?]' marker.",
+ "report_count": 4,
+ "control_count": 32,
+ "reports": [
+  {
+   "report_id": "management_reports.r01",
+   "name": "Payment Plan Charges",
+   "screenshots": [
+    "1.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "1.PNG only (first radio of the list selected), default state. Five full-width sections stacked top to bottom - PRINT FORMAT, OFFICE/GROUP, REPORT DATE, PLAN TYPE, OTHER OPTIONS - with no side-by-side columns. No REPORT FORMAT section, no PROVIDER / USER section, no PATIENT section and no date range (a single Billing Date). The only greyed controls are the three Ortho checkboxes (captured with Plan Type = Regular; the Ortho state is not shown). About 187 px of uniform blank panel follow the checkbox row down to the action bar and there is no scrollbar - nothing clipped. A pixel sweep of the panel found no control besides those listed (nothing at the right edge, no Page Break). CLEAR CRITERIA = grey-styled button with a refresh icon at the right end of the blue REPORT CRITERIA bar; PRINT / PREVIEW (printer icon) and ADD TO MY FAVORITES (plus icon) = blue buttons at the bottom right.",
+   "controls": [
+    {
+     "control_id": "management_reports.r01.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "First section of the panel, full width. Two radios side by side on one row, no row label. PDF carries the blue dot; Excel is enabled (white radio, black label)."
+    },
+    {
+     "control_id": "management_reports.r01.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Full-width section. Two radios side by side on one row, no row label. Office carries the blue dot; Office Group is enabled (white radio, black label). The Office Group state was not captured."
+    },
+    {
+     "control_id": "management_reports.r01.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on its own row directly below the Office / Office Group radios; blue (enabled) SELECT button with a building icon to its right. 108 is the current office id (same number as 'OID :108' in the title bar). The dialog the button opens is not shown in any screenshot."
+    },
+    {
+     "control_id": "management_reports.r01.s03.c01",
+     "section": "REPORT DATE",
+     "label": "Billing Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "A SINGLE date, not a Start / End range. Label in the left cell, date box in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY; the value is the capture day (the default appears to be today)."
+    },
+    {
+     "control_id": "management_reports.r01.s04.c01",
+     "section": "PLAN TYPE",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Regular",
+      "Ortho"
+     ],
+     "default_value": "Regular",
+     "enabled": true,
+     "notes": "Full-width section. Two radios side by side on one row, no row label. Regular carries the blue dot; Ortho is enabled (white radio, black label). The Ortho state was not captured, so what it changes in OTHER OPTIONS is not shown."
+    },
+    {
+     "control_id": "management_reports.r01.s05.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Ortho Patient",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": false,
+     "notes": "GREYED OUT / disabled (grey box, grey label) in the captured state PLAN TYPE = Regular; the box is empty (unchecked). First of three checkboxes side by side on one row, left-aligned. Presumably enabled when Ortho is selected - inference from the labels, not visible in the screenshot."
+    },
+    {
+     "control_id": "management_reports.r01.s05.c02",
+     "section": "OTHER OPTIONS",
+     "label": "Ortho Primary",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": false,
+     "notes": "GREYED OUT / disabled (grey box, grey label) while PLAN TYPE = Regular; empty box. Second checkbox on the same row."
+    },
+    {
+     "control_id": "management_reports.r01.s05.c03",
+     "section": "OTHER OPTIONS",
+     "label": "Ortho Secondary",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": false,
+     "notes": "GREYED OUT / disabled (grey box, grey label) while PLAN TYPE = Regular; empty box. Third checkbox on the same row."
+    }
+   ]
+  },
+  {
+   "report_id": "management_reports.r02",
+   "name": "Uncollected Copay",
+   "screenshots": [
+    "2.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "2.PNG only (second radio of the list selected), default state. Layout: REPORT FORMAT (left half) and PRINT FORMAT (right half) share the first row; OFFICE/GROUP, DATE RANGE and OTHER OPTIONS are full width below. No PROVIDER / USER section and no PATIENT section. No greyed-out control anywhere. About 198 px of uniform blank panel follow the Patient Balance Greater Than row down to the action bar, no scrollbar - nothing clipped. A pixel sweep of the panel found no control besides those listed. Actions as in the other screenshots: grey-styled CLEAR CRITERIA (refresh icon) at the right end of the REPORT CRITERIA bar; blue PRINT / PREVIEW (printer icon) and ADD TO MY FAVORITES (plus icon) at the bottom right.",
+   "controls": [
+    {
+     "control_id": "management_reports.r02.s01.c01",
+     "section": "REPORT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Detail",
+      "Summary"
+     ],
+     "default_value": "Detail",
+     "enabled": true,
+     "notes": "LEFT half of the first row of sections, side by side with PRINT FORMAT. Two radios on one row, no row label. Detail carries the blue dot; Summary is enabled (white radio, black label)."
+    },
+    {
+     "control_id": "management_reports.r02.s02.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "RIGHT half of the first row of sections, side by side with REPORT FORMAT. Two radios on one row, no row label. PDF carries the blue dot; Excel is enabled (white radio, black label)."
+    },
+    {
+     "control_id": "management_reports.r02.s03.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Full-width section. Two radios side by side on one row, no row label. Office carries the blue dot; Office Group is enabled (white radio, black label)."
+    },
+    {
+     "control_id": "management_reports.r02.s03.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on its own row directly below the Office / Office Group radios; blue (enabled) SELECT button with a building icon to its right. 108 = current office id (the OID in the title bar). Dialog not shown."
+    },
+    {
+     "control_id": "management_reports.r02.s04.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Full-width section. Label in the left cell, date box in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY; equals End Date and the capture day (the default appears to be today)."
+    },
+    {
+     "control_id": "management_reports.r02.s04.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "On its own row directly below Start Date; same box with a calendar icon inside at its right end."
+    },
+    {
+     "control_id": "management_reports.r02.s05.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Patient Balance Greater Than",
+     "type": "number_input",
+     "options": [],
+     "default_value": "0.00",
+     "enabled": true,
+     "notes": "Label in the left cell; editable-style box (light fill, same width as the date boxes) in the right cell with the value right-aligned and two decimals. No currency symbol, no spinner arrows, no icon. Only control of the section."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "management_reports.r02.k01",
+     "about": "meaning",
+     "control_id": "management_reports.r02.s02.c01",
+     "text": "PRINT FORMAT = Excel downloads a spreadsheet instead of opening the PDF report viewer; Excel layouts are flat (one record per row). Cross-cutting statement of the document for reports with a PRINT FORMAT section, recorded once here for this category; the vendor evidence it cites is for other reports. (For Payment Plan Charges, the other report of the category with this section, the document lists the effect only as an inference.)",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`PRINT FORMAT` = `Excel` | Downloads a spreadsheet instead of opening the viewer"
+    },
+    {
+     "correction_id": "management_reports.r02.k02",
+     "about": "meaning",
+     "control_id": "management_reports.r02.s04.c01",
+     "text": "The report lists the patients on the schedule in the date range who have a patient balance (vendor text: every patient on today's schedule with a patient balance due), which implies that Start Date / End Date select by appointment date.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "**Output.** Documented elements: one row per patient on the schedule in the range with a patient balance;"
+    },
+    {
+     "correction_id": "management_reports.r02.k03",
+     "about": "meaning",
+     "control_id": "management_reports.r02.s05.c01",
+     "text": "Patient Balance Greater Than is a threshold on the patient balance due - whether pre-existing or created that day.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "patient on today's schedule who has a patient balance due — pre-existing or created today — with the"
+    }
+   ]
+  },
+  {
+   "report_id": "management_reports.r03",
+   "name": "Audit Trail",
+   "screenshots": [
+    "3.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "3.PNG only (third radio of the list selected), default state. Layout: OFFICE/GROUP (left half) and USER (right half) side by side; then full-width DATE RANGE, PATIENT and OTHER OPTIONS. This report shows NO PRINT FORMAT section (no PDF / Excel choice) and NO REPORT FORMAT section. No greyed-out control anywhere. The option lists of Audit Type and Module Type are not exposed in any screenshot - only the default ALL - and must be obtained elsewhere. About 161 px of uniform blank panel follow the Module Type row down to the action bar, no scrollbar - nothing clipped. A pixel sweep of the panel found no control besides those listed. Actions as in the other screenshots: grey-styled CLEAR CRITERIA (refresh icon) at the right end of the REPORT CRITERIA bar; blue PRINT / PREVIEW (printer icon) and ADD TO MY FAVORITES (plus icon) at the bottom right. 3.PNG is 1364x586 px (shifted 2 px left compared with the others), same content layout.",
+   "controls": [
+    {
+     "control_id": "management_reports.r03.s01.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "LEFT half of the first block, side by side with USER. Two radios on one row, no row label. Office carries the blue dot; Office Group is enabled (white radio, black label)."
+    },
+    {
+     "control_id": "management_reports.r03.s01.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on the second row of the left half, below the Office / Office Group radios; blue (enabled) SELECT button with a building icon to its right. 108 = current office id (the OID in the title bar). Dialog not shown."
+    },
+    {
+     "control_id": "management_reports.r03.s02.c01",
+     "section": "USER",
+     "label": "User",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "RIGHT half of the first block, beside OFFICE/GROUP. Row label 'User', then a read-only grey box showing ALL, then a blue (enabled) SELECT button with a person-plus icon. The second row of the right half (level with the office box) is empty. The dialog the button opens is not shown in any screenshot."
+    },
+    {
+     "control_id": "management_reports.r03.s03.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Full-width section. Label in the left cell, date box in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY; equals End Date and the capture day (the default appears to be today)."
+    },
+    {
+     "control_id": "management_reports.r03.s03.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "On its own row directly below Start Date; same box with a calendar icon inside at its right end."
+    },
+    {
+     "control_id": "management_reports.r03.s04.c01",
+     "section": "PATIENT",
+     "label": "Patient",
+     "type": "text_input",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Full-width section. Label in the left cell; wide EMPTY box in the right cell (wider than the date boxes, same width as the two dropdowns below). The box has the light editable-field fill (same as the date boxes and dropdowns), not the grey read-only fill of the Office and User boxes, so it is recorded as text_input with its SEARCH button as a separate control. Whether the box accepts typing or is filled only through SEARCH cannot be told from the screenshot. Empty presumably means no patient filter (inference)."
+    },
+    {
+     "control_id": "management_reports.r03.s04.c02",
+     "section": "PATIENT",
+     "label": "SEARCH",
+     "type": "button",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Blue enabled button with a magnifier icon immediately right of the Patient box (patient search / lookup). The dialog it opens is not shown in any screenshot."
+    },
+    {
+     "control_id": "management_reports.r03.s05.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Audit Type",
+     "type": "dropdown",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "list collapsed - other values not visible. Label in the left cell; dropdown with a chevron at its right end in the right cell, same width as the Patient box. Enabled (light fill, dark text)."
+    },
+    {
+     "control_id": "management_reports.r03.s05.c02",
+     "section": "OTHER OPTIONS",
+     "label": "Module Type",
+     "type": "dropdown",
+     "options": [
+      "Appointments"
+     ],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "list collapsed - other values not visible. On its own row directly below Audit Type; identical dropdown (chevron at the right end, same width). Enabled.",
+     "vendor_doc_options": [
+      "Appointments"
+     ],
+     "vendor_doc_options_confidence": "confirmed"
+    },
+    {
+     "control_id": "management_reports.r03.x01",
+     "section": "Audit Trail Report (patient Print Reports dialog)",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Account",
+      "Patient"
+     ],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Appears only when the report is opened from the patient toolbar Print Reports icon > Audit Trail: a small dialog titled `Audit Trail Report` with these two radios plus Start Date / End Date (the dates are already in the inventory as DATE RANGE). It scopes the audit to the family account or to the single patient. Not present on the Reports > Management Reports criteria panel. Default not documented.",
+     "origin": "vendor_doc",
+     "confidence": "confirmed",
+     "options_unknown": false,
+     "evidence_quote": "with radios `Account` / `Patient` and `Start Date` / `End Date` — the vendor's preferred way to audit one",
+     "source_document": "research/legacy_report_outputs_monthly_mgmt_ledger_statements.md"
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "management_reports.r03.d01",
+     "when": "The report is opened from the patient toolbar Print Reports icon > Audit Trail instead of Reports > Management Reports",
+     "effect": "A small dialog `Audit Trail Report` is shown: radios `Account` / `Patient` plus `Start Date` / `End Date` (the vendor-preferred way to audit one patient or one family account).",
+     "controls": [
+      "management_reports.r03.s03.c01",
+      "management_reports.r03.s03.c02"
+     ],
+     "confidence": "confirmed",
+     "evidence_quote": "**Other entry point.** Patient `Print Reports` icon > `Audit Trail` opens a small dialog `Audit Trail Report`"
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "management_reports.r03.k01",
+     "about": "meaning",
+     "control_id": "management_reports.r03.s03.c01",
+     "text": "Start Date / End Date are the UPDATED-date range: they filter on when the change was made, not on the original date of the changed record.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "| `Start Date` / `End Date` | Updated-date range | `[S]` |"
+    },
+    {
+     "correction_id": "management_reports.r03.k02",
+     "about": "meaning",
+     "control_id": "management_reports.r03.s05.c01",
+     "text": "Audit Type filters on the kind of audited action (vendor text on what the Audit Trail tracks). The value list of the dropdown is NOT verified, so no option is added - see unresolved.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`Audit Type` (default `ALL`) | Kind of action; the tracked actions are Edit, Delete, Close out, Reschedule Appointment, Cut/Copy – Paste Appointment — the exact dropdown values are `[unverified]`"
+    },
+    {
+     "correction_id": "management_reports.r03.k03",
+     "about": "meaning",
+     "control_id": "management_reports.r03.s02.c01",
+     "text": "User restricts the list to the changes made by the selected users; the default ALL is echoed in the report footer as `User : ALL`.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "| `User` (default `ALL`) | Events by the selected users | `[S]` |"
+    },
+    {
+     "correction_id": "management_reports.r03.k04",
+     "about": "meaning",
+     "control_id": "management_reports.r03.s05.c02",
+     "text": "For appointments the Audit Trail records only delete, reschedule and cut / copy-paste - ordinary appointment edits are not recorded (2026 revision of the vendor article). This bounds what Module Type = Appointments can return; deleted appointments are found by `Delete Appointment-Created` in the Description column.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "vendor article says that for appointments only delete, reschedule and cut / copy-paste are recorded (ordinary"
+    },
+    {
+     "correction_id": "management_reports.r03.k05",
+     "about": "other",
+     "control_id": "",
+     "text": "The absence of a PRINT FORMAT section is real (as captured): the report opens in the report viewer, whose header strip offers Export to Excel and Word, so the Excel output exists without a criteria choice.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "**Quirks.** No `PRINT FORMAT` section; export through the viewer (`MagAuditTrail`)."
+    }
+   ]
+  },
+  {
+   "report_id": "management_reports.r04",
+   "name": "Time Clock Report",
+   "screenshots": [
+    "4.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "4.PNG only (fourth / last radio of the list selected), default state. Layout: full-width REPORT FORMAT with three options; then OFFICE/GROUP (left half) and USER (right half) side by side; then full-width DATE RANGE and OTHER OPTIONS. This report shows NO PRINT FORMAT section (no PDF / Excel choice) and no PATIENT section. The only greyed control is the Group By Office checkbox. About 207 px of uniform blank panel follow the checkbox row down to the action bar, no scrollbar - nothing clipped. A pixel sweep of the panel found no control besides those listed. Actions as in the other screenshots: grey-styled CLEAR CRITERIA (refresh icon) at the right end of the REPORT CRITERIA bar; blue PRINT / PREVIEW (printer icon) and ADD TO MY FAVORITES (plus icon) at the bottom right.",
+   "controls": [
+    {
+     "control_id": "management_reports.r04.s01.c01",
+     "section": "REPORT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Detail",
+      "Summary",
+      "Employee Total Only"
+     ],
+     "default_value": "Detail",
+     "enabled": true,
+     "notes": "First section, FULL width (not paired with another section). Three radios side by side on one row, no row label. Detail carries the blue dot; Summary and Employee Total Only are enabled (white radios, black labels)."
+    },
+    {
+     "control_id": "management_reports.r04.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "LEFT half of the second block, side by side with USER. Two radios on one row, no row label. Office carries the blue dot; Office Group is enabled (white radio, black label)."
+    },
+    {
+     "control_id": "management_reports.r04.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on the second row of the left half, below the Office / Office Group radios; blue (enabled) SELECT button with a building icon to its right. 108 = current office id (the OID in the title bar). Dialog not shown."
+    },
+    {
+     "control_id": "management_reports.r04.s03.c01",
+     "section": "USER",
+     "label": "User",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "RIGHT half of the second block, beside OFFICE/GROUP. Row label 'User', then a read-only grey box showing ALL, then a blue (enabled) SELECT button with a person-plus icon. The second row of the right half (level with the office box) is empty. Dialog not shown."
+    },
+    {
+     "control_id": "management_reports.r04.s04.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Full-width section. Label in the left cell, date box in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY; equals End Date and the capture day (the default appears to be today)."
+    },
+    {
+     "control_id": "management_reports.r04.s04.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "On its own row directly below Start Date; same box with a calendar icon inside at its right end."
+    },
+    {
+     "control_id": "management_reports.r04.s05.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Group By Office",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": false,
+     "notes": "GREYED OUT / disabled (grey box, grey label); the box is empty (unchecked). Only control of the section, left-aligned. Captured with OFFICE/GROUP = Office and the single office 108; presumably enabled when Office Group or several offices are chosen - inference from the label, not visible in the screenshot."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "management_reports.r04.k01",
+     "about": "meaning",
+     "control_id": "management_reports.r04.s01.c01",
+     "text": "REPORT FORMAT = Detail: every punch for all users over the date range (meant for auditing gross hours and gross wages).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "| `Detail` | Every punch for all users over the date range; meant for auditing gross hours and gross wages |"
+    },
+    {
+     "correction_id": "management_reports.r04.k02",
+     "about": "meaning",
+     "control_id": "management_reports.r04.s01.c01",
+     "text": "REPORT FORMAT = Summary: one summary per user PER DAY; overtime follows the overtime setting of each user.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "| `Summary` | One summary per user **per day**; overtime follows the overtime setting of each user |"
+    },
+    {
+     "correction_id": "management_reports.r04.k03",
+     "about": "meaning",
+     "control_id": "management_reports.r04.s01.c01",
+     "text": "REPORT FORMAT = Employee Total Only (the vendor text calls it \"Total\"): one line per employee for the date range.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "| `Employee Total Only` (text: \"Total\") | One line per employee for the date range |"
+    },
+    {
+     "correction_id": "management_reports.r04.k04",
+     "about": "other",
+     "control_id": "",
+     "text": "The Management Reports version has no PRINT FORMAT section (as captured); the same report under My Reports - a user's own hours - additionally offers PRINT FORMAT PDF / Excel (vendor screenshot).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "offers `PRINT FORMAT` `PDF` / `Excel` `[S]` `[V35]`."
+    },
+    {
+     "correction_id": "management_reports.r04.k05",
+     "about": "meaning",
+     "control_id": "management_reports.r04.s05.c01",
+     "text": "Vendor text: the time clock is user-specific, not location-specific, and the office of a clock in / out is not tracked or reported. What Group By Office (and the OFFICE/GROUP selection) act on is therefore unverified - see unresolved.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "office of a clock in / out is not tracked or reported `[D]` `[V36]`"
+    }
+   ]
+  }
+ ],
+ "supplement_unresolved": [
+  {
+   "report_id": "management_reports.r01",
+   "question": "What enables Ortho Patient / Ortho Primary / Ortho Secondary? \"Enabled for Ortho\" comes from our own capture; the meaning of the three checkboxes (patient-portion, primary-insurance, secondary-insurance periodic charges) and of Billing Date is inferred. No vendor source shows the PLAN TYPE = Ortho state of this report."
+  },
+  {
+   "report_id": "management_reports.r02",
+   "question": "The effect of REPORT FORMAT Detail / Summary is inferred for Uncollected Copay. Vendor text says the report covers the patients on the schedule who have a patient balance due, which implies - but does not state - that Start Date / End Date select by appointment date; confirm on the live legacy screen."
+  },
+  {
+   "report_id": "management_reports.r03",
+   "question": "Exact values of the Audit Type dropdown are unverified. Vendor text only lists the tracked actions: Edit, Delete, Close out, Reschedule Appointment, Cut/Copy - Paste Appointment."
+  },
+  {
+   "report_id": "management_reports.r03",
+   "question": "Values of the Module Type dropdown other than ALL and Appointments are not documented, and the legacy order is unknown. Vendor text names the modules the Audit Trail tracks (Appointments, Patient, Setup, Transactions, Treatment Plan) and the sample output shows PATIENT / Patient, Transactions, Treatment Plan and Appointments in its Type column; that these are the dropdown values is presumed, not verified."
+  },
+  {
+   "report_id": "management_reports.r03",
+   "question": "Contents of the User > SELECT dialog and of the Patient SEARCH dialog are not documented. That an empty Patient box means all patients comes from our own capture only."
+  },
+  {
+   "report_id": "management_reports.r03",
+   "question": "Default of the Account / Patient radios in the patient-level `Audit Trail Report` dialog is not documented."
+  },
+  {
+   "report_id": "management_reports.r04",
+   "question": "What enables `Group By Office` and what does it do? The document says disabled for a single office and infers grouping by office when several are selected; the vendor states that the office of a clock in / out is not tracked, yet the option exists."
+  },
+  {
+   "question": "Contents of the OFFICE/GROUP > SELECT dialog (and its Office Group variant) and of the User > SELECT dialog of Time Clock Report are not documented; the research document lists the contents of the SELECT / SEARCH dialogs as a gap."
+  }
+ ],
+ "supplement_source_document": "research/legacy_report_outputs_monthly_mgmt_ledger_statements.md",
+ "screenshot_control_count": 31,
+ "vendor_doc_control_count": 1
+}

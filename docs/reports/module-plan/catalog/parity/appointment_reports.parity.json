@@ -1,0 +1,2523 @@
+{
+ "category": "appointment_reports",
+ "reports": [
+  {
+   "report_id": "appointment_reports.r01",
+   "legacy_name": "Appointment List",
+   "report_key": "appointment.appointment_list",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "appointment_reports.r01.s01.c01",
+     "signature_id": "sig0001",
+     "legacy_section": "[?]",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Confirmation Call List",
+      "Call List",
+      "Pull Chart List",
+      "Cancelled List",
+      "Cancelled From Automated Campaigns",
+      "Missed List"
+     ],
+     "legacy_default": "Confirmation Call List",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "report_type",
+     "param_type": "enum",
+     "option_map": {
+      "Confirmation Call List": "confirmation_call_list",
+      "Call List": "call_list",
+      "Pull Chart List": "pull_chart_list",
+      "Cancelled List": "cancelled_list",
+      "Cancelled From Automated Campaigns": "cancelled_from_automated_campaigns",
+      "Missed List": "missed_list"
+     },
+     "default": "confirmation_call_list",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy section title is REPORT FORMAT TO PRINT (clipped above our capture; read from vendor screenshots). Selects the list variant: population, columns and printed title (Cancelled List prints Appointment Cancellation List). Fifth option was labelled Cancelled From Denticon Patient Engagement until 2023: kept as a search alias (legacy_names), not as an option. Only the Confirmation Call List (our capture) and Cancelled List (vendor screenshot) states are known; capture Call List, Pull Chart List, Cancelled From Automated Campaigns and Missed List on the live tool - they drive the nine greyed controls.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r01.s02.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. Both options enabled on this report (nothing greyed in the capture); applied to the appointment office (rule d03).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r01.s02.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read. Filters the appointment office (rpt_appointment_facts.office_id; rpt_lab_cases.office_id on the lab reports).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r01.s03.c01",
+     "signature_id": "sig0004",
+     "legacy_section": "PROVIDER",
+     "legacy_label": "Provider",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool. Provider role (line, appointment, preferred) is declared per report. Role appointment on this report: the appointment provider; roster-first list, never scoped by providers.office_id.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r01.s04.c01",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range; date_basis is fixed per report or chosen by the basis radio of the same section. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "appointment_reports.r01.s04.c02",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range, inclusive end. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "appointment_reports.r01.s05.c01",
+     "signature_id": "sig0007",
+     "legacy_section": "EXCLUDE PATIENT TYPE",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "None",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "exclude_patient_type_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "none",
+     "default_differs_reason": "",
+     "enabled_when": "report_type != confirmation_call_list",
+     "notes": "Exclude filter: None = exclude nothing; rows whose value is in the list are dropped. Dialog content was never captured - confirm on the live tool. Patients without a type are kept; no_type_defined drops them.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r01.s06.c01",
+     "signature_id": "sig0008",
+     "legacy_section": "EXCLUDE RESP. PARTY TYPE",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "None",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "exclude_resp_party_type_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "none",
+     "default_differs_reason": "",
+     "enabled_when": "report_type != confirmation_call_list",
+     "notes": "Exclude filter: None = exclude nothing; rows whose value is in the list are dropped. Dialog content was never captured - confirm on the live tool."
+    },
+    {
+     "control_id": "appointment_reports.r01.s07.c01",
+     "signature_id": "sig0009",
+     "legacy_section": "CANCELLATION REASON",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "cancellation_reason_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "report_type != confirmation_call_list",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool. Greyed with confirmation_call_list (our capture); enabled with cancelled_list (vendor screenshot, d02). Applies to cancelled rows only; states for call_list, pull_chart_list, cancelled_from_automated_campaigns and missed_list never captured (catalog family question 1).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r01.s08.c01",
+     "signature_id": "sig0010",
+     "legacy_section": "OPERATORY",
+     "legacy_label": "Operatory",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "operatory_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "report_type not in [confirmation_call_list, cancelled_list]",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool."
+    },
+    {
+     "control_id": "appointment_reports.r01.s09.c01",
+     "signature_id": "sig0011",
+     "legacy_section": "APPOINTMENT TYPE",
+     "legacy_label": "Length",
+     "legacy_type": "dropdown",
+     "legacy_options": [],
+     "legacy_default": "Any",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "unknown_legacy",
+     "param": "appointment_length",
+     "param_type": "enum",
+     "option_map": {},
+     "default": "any",
+     "default_differs_reason": "",
+     "enabled_when": "report_type not in [confirmation_call_list, cancelled_list]",
+     "notes": "Static dropdown captured collapsed: only the default is known. Expand the list on the live tool and record every option. Expected: Any plus appointment lengths."
+    },
+    {
+     "control_id": "appointment_reports.r01.s09.c02",
+     "signature_id": "sig0012",
+     "legacy_section": "APPOINTMENT TYPE",
+     "legacy_label": "Missed",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "appointment_statuses.missed",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "report_type not in [confirmation_call_list, cancelled_list]",
+     "notes": "Row label Status. Member of the appointment status checkbox pair."
+    },
+    {
+     "control_id": "appointment_reports.r01.s09.c03",
+     "signature_id": "sig0013",
+     "legacy_section": "APPOINTMENT TYPE",
+     "legacy_label": "Cancelled",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "appointment_statuses.cancelled",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "report_type not in [confirmation_call_list, cancelled_list]",
+     "notes": "Row label Status. Member of the appointment status checkbox pair."
+    },
+    {
+     "control_id": "appointment_reports.r01.s10.c01",
+     "signature_id": "sig0014",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include Off Call List",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_off_call_list",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "report_type != confirmation_call_list",
+     "notes": ""
+    },
+    {
+     "control_id": "appointment_reports.r01.s10.c02",
+     "signature_id": "sig0015",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include Patient Balance",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_patient_balance",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Same parameter as Show Patient Balance."
+    },
+    {
+     "control_id": "appointment_reports.r01.s11.c01",
+     "signature_id": "sig0016",
+     "legacy_section": "SORT BY",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Appointment Date",
+      "Provider (Last Name) – Appointment Date",
+      "Patient Chart#",
+      "Patient Last Name"
+     ],
+     "legacy_default": "Appointment Date",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "sort_by",
+     "param_type": "enum",
+     "option_map": {
+      "Appointment Date": "appointment_date",
+      "Provider (Last Name) – Appointment Date": "provider_last_name_appointment_date",
+      "Patient Chart#": "patient_chart_no",
+      "Patient Last Name": "patient_last_name"
+     },
+     "default": "appointment_date",
+     "default_differs_reason": "",
+     "enabled_when": "report_type != confirmation_call_list",
+     "notes": "Rule inferred: disabled with confirmation_call_list (captured); enabled for the other formats is presumed, the cancelled_list state is not stated (family question 1). Row order inside the innermost band.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r01.x01",
+     "signature_id": null,
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "vendor_doc",
+     "vendor_doc_confidence": "confirmed",
+     "vendor_doc_evidence": "The area clipped at the top holds `PRINT FORMAT` (`PDF` / `Excel`) and the header of the six radios is `REPORT FORMAT TO PRINT`.",
+     "legacy_notes": "Hidden ABOVE the captured area: our screenshot of Appointment List was taken scrolled to the bottom of the criteria panel, so the top of the panel is cut off. Vendor screenshots of this criteria screen show the section. The default is not stated for this report (the other eight reports of the category show PDF selected in our captures). Whether it sits above or beside REPORT FORMAT TO PRINT is not stated. The document also states, as a cross-cutting fact backed by vendor criteria screenshots, that every report of the Appointment, Recall and Referral categories has PRINT FORMAT (PDF / Excel).",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "VENDOR-DOC: PRINT FORMAT section above the list-type radios, outside our capture. Shared vendor-doc parameter of 04 (output_format, PDF -> pdf, Excel -> xlsx, default pdf). The legacy default is not stated for this report; pdf is the captured default of the other eight reports of the category - confirm on the live tool. Enhanced with csv; role output (never changes the rows).",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "appointment_reports.r01.d01",
+     "legacy_when": "REPORT FORMAT TO PRINT = Confirmation Call List (the state of our capture)",
+     "legacy_effect": "Of the filter criteria only the office (OFFICE/GROUP), PROVIDER, the DATE RANGE dates and Include Patient Balance are enabled. Everything else is greyed - the EXCLUDE PATIENT TYPE, EXCLUDE RESP. PARTY TYPE, CANCELLATION REASON and OPERATORY pickers, the Length dropdown, the Status checkboxes Missed / Cancelled, Include Off Call List and all four SORT BY radios (the greyed set recorded in our capture).",
+     "confidence": "confirmed",
+     "new_behavior": "report_type = confirmation_call_list: only office_scope, provider_ids, date_range (date_from / date_to) and include_patient_balance are enabled. exclude_patient_type_codes, exclude_resp_party_type_codes, cancellation_reason_codes, include_off_call_list and sort_by are disabled by enabled_when report_type != confirmation_call_list; operatory_ids, appointment_length and appointment_statuses by enabled_when report_type not in [confirmation_call_list, cancelled_list]. A disabled parameter is replaced by its disabled_value (= its default: none, none, all, false, appointment_date, all, any, []) before hashing and execution, so it cannot change the rows."
+    },
+    {
+     "rule_id": "appointment_reports.r01.d02",
+     "legacy_when": "REPORT FORMAT TO PRINT = Cancelled List",
+     "legacy_effect": "EXCLUDE PATIENT TYPE, EXCLUDE RESP. PARTY TYPE, CANCELLATION REASON and Include Off Call List become enabled; OPERATORY and the Status checkboxes (Missed / Cancelled) stay disabled and Length appears disabled. The states of SORT BY and Include Patient Balance in this mode are not stated.",
+     "confidence": "confirmed",
+     "new_behavior": "report_type = cancelled_list: exclude_patient_type_codes, exclude_resp_party_type_codes, cancellation_reason_codes and include_off_call_list are enabled (enabled_when report_type != confirmation_call_list); operatory_ids, appointment_length and appointment_statuses stay disabled (enabled_when report_type not in [confirmation_call_list, cancelled_list]). sort_by is enabled (inferred rule report_type != confirmation_call_list) and include_patient_balance has no rule (always enabled); both states are unconfirmed for this format and are open questions of the catalog entry."
+    },
+    {
+     "rule_id": "appointment_reports.r01.d03",
+     "legacy_when": "OFFICE/GROUP = Office Group",
+     "legacy_effect": "The SELECT picker chooses office groups defined in setup instead of offices; with Office it chooses one or more offices. Cross-cutting statement of the document for the Appointment, Recall and Referral criteria screens - recorded once here (Appointment List); it applies to every report of this category that has the Office / Office Group radios.",
+     "confidence": "likely",
+     "new_behavior": "office_scope: mode office (legacy Office) fills office_ids - default token working_office, also an office id list, my_offices or all; mode office_group (legacy Office Group) fills office_group_id or office_group_ids from lookup:office_groups, default all. Exactly one value key is set. The same rule holds on all nine reports of the category; the resolved office list filters the appointment office (rpt_appointment_facts.office_id / rpt_lab_cases.office_id)."
+    },
+    {
+     "rule_id": "appointment_reports.r01.d04",
+     "legacy_when": "A favorite has already been saved for the report (the legacy tool keeps one saved version per report)",
+     "legacy_effect": "The action button ADD TO MY FAVORITES reads UPDATE MY FAVORITES. Cross-cutting statement of the document for the Appointment, Recall and Referral criteria screens - recorded once here (Appointment List); it applies to every report of this category. Whether the relabel shows only when the screen is opened from My Favorites is not stated.",
+     "confidence": "likely",
+     "new_behavior": "No relabel rule: ADD TO MY FAVORITES maps to saved_view (server-side saved view plus favorite, report_saved_views). Several views per report are allowed; when the runner was opened from a saved view the action reads Update saved view and overwrites that view. Applies to all nine reports of the category."
+    }
+   ],
+   "legacy_corrections": [
+    {
+     "about": "label",
+     "control_id": "appointment_reports.r01.s01.c01",
+     "text": "The section title that our capture cuts off above the six list-format radios is REPORT FORMAT TO PRINT - it replaces the [?] of the inventory."
+    },
+    {
+     "about": "truncation",
+     "control_id": "",
+     "text": "The capture is clipped at the TOP only. The hidden area holds the PRINT FORMAT section (PDF / Excel, see added_controls) and the title REPORT FORMAT TO PRINT of the list-format radios; the document names nothing else there, and the bottom of the panel (SORT BY) is complete in our capture. With PRINT FORMAT added the criteria panel is fully known."
+    },
+    {
+     "about": "label",
+     "control_id": "appointment_reports.r01.s01.c01",
+     "text": "The fifth radio is confirmed as read: Cancelled From Automated Campaigns (vendor screenshot of May 2024). In June 2023 the same radio was labelled Cancelled From Denticon Patient Engagement - an older-build label of the same option, not a further option."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r01.s01.c01",
+     "text": "Cancelled List and Missed List are history lists - they ignore whether a replacement appointment exists. Call List is the work list: with default parameters it leaves out the appointments that were replaced or taken off the call list."
+    },
+    {
+     "about": "default",
+     "control_id": "appointment_reports.r01.s04.c01",
+     "text": "DATE RANGE (Start Date / End Date) is matched on the appointment date and defaults to today - the 11/21/2026 of our capture is the capture day, not a fixed default."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r01.s07.c01",
+     "text": "CANCELLATION REASON limits the cancelled appointments to the chosen cancellation reasons - the system reasons and the ones the office defined."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r01.s01.c01",
+     "text": "Cancelled From Automated Campaigns lists the appointments that the patient cancelled through an automated campaign message."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r01.s10.c01",
+     "text": "Off call list = call-list entries that a user took off the list by ticking Off List (an entry also leaves the call list when it is rescheduled or when a new appointment is made; a removed entry can be restored). What exactly the checkbox adds to each list format is not stated beyond its name."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r01.s09.c01",
+     "text": "Length, the Status checkboxes Missed / Cancelled and Include Off Call List mirror the filters of the Scheduler's Call List screen - Select Duration (mins), Show Missed, Show Cancelled, Show Off Call List. Length is therefore an appointment-duration filter in minutes; its values other than Any are not documented (see unresolved)."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r01.s01.c01",
+     "text": "Confirmation Call List is the working list for confirmation calls, for one date or a date range."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r01.s01.c01",
+     "text": "Call List is the former menu report Appointment Call List: the missed or cancelled appointments that still have no replacement."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r01.s01.c01",
+     "text": "Pull Chart List is the former menu report Appointment Pull Chart List: the \"patients for the day\" list used for pulling charts."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r01.s01.c01",
+     "text": "Cancelled List is the former menu report Appt Cancellation List / Appointment Cancellation List."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r01.s01.c01",
+     "text": "Missed List is the former menu report Missed Appointment List: the history of the appointments marked missed."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r01.s01.c01",
+     "text": "Vendor guides still call the Cancelled From Automated Campaigns format by its old name, Appointment Cancellation Report From Denticon Patient Communication / Engagement."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r01.s10.c02",
+     "text": "Include Patient Balance prints the patient balance on the list - shown as Curr Bal on the Cancelled List and as Bal: on the campaign-cancellation format. (Whether the checkbox is enabled for those two formats is not stated - see unresolved.)"
+    },
+    {
+     "about": "other",
+     "control_id": "",
+     "text": "Hidden population rule with no criteria control: a deleted appointment leaves no trace in any appointment report (it exists only in the Audit Trail) - unlike a cancelled appointment, which is removed from the schedule but kept in the appointment history and on the call list. Category-wide statement, recorded once here (Appointment List); it applies to every report of this category."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": [
+    {
+     "param": "output_format",
+     "param_type": "enum",
+     "legacy_control": "PRINT FORMAT (section above the visible area)",
+     "options": "PDF -> pdf, Excel -> xlsx",
+     "default": "pdf",
+     "evidence": "documented",
+     "kind": "vendor_doc",
+     "note": "Vendor screenshots show the section above the list-type radios; our capture starts below it."
+    }
+   ]
+  },
+  {
+   "report_id": "appointment_reports.r02",
+   "legacy_name": "Missed Appointments Not Marked As Missed",
+   "report_key": "appointment.missed_appointments_not_marked_as_missed",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "appointment_reports.r02.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "appointment_reports.r02.s02.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. Both options enabled on this report (nothing greyed in the capture); applied to the appointment office (rule d03).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r02.s02.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read. Filters the appointment office (rpt_appointment_facts.office_id; rpt_lab_cases.office_id on the lab reports).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r02.s03.c01",
+     "signature_id": "sig0004",
+     "legacy_section": "PROVIDER",
+     "legacy_label": "Provider",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool. Provider role (line, appointment, preferred) is declared per report. Role appointment on this report: the appointment provider; roster-first list, never scoped by providers.office_id.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r02.s04.c01",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Range on rpt_appointment_facts.appointment_date (fixed basis), office-local; capped at the office-local now: past dates plus, on today, only appointments whose scheduled end (start_time + duration_minutes) has passed (product decision, INFERRED - the legacy treatment of today is open question 1 of the catalog entry). Without the today branch the legacy default run (today / today, end of day) would always be empty. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r02.s04.c02",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Inclusive end, capped at the office-local now (same rule as Start Date). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r02.s05.c01",
+     "signature_id": "sig0007",
+     "legacy_section": "EXCLUDE PATIENT TYPE",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "None",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "exclude_patient_type_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "none",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Exclude filter: None = exclude nothing; rows whose value is in the list are dropped. Dialog content was never captured - confirm on the live tool. Patients without a type are kept; no_type_defined drops them.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r02.s06.c01",
+     "signature_id": "sig0008",
+     "legacy_section": "EXCLUDE RESP. PARTY TYPE",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "None",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "exclude_resp_party_type_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "none",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Exclude filter: None = exclude nothing; rows whose value is in the list are dropped. Dialog content was never captured - confirm on the live tool."
+    },
+    {
+     "control_id": "appointment_reports.r02.s07.c01",
+     "signature_id": "sig0018",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Show Patient Balance",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_patient_balance",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Same parameter as Include Patient Balance."
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "appointment_reports.r03",
+   "legacy_name": "New Patients via Appointments",
+   "report_key": "appointment.new_patients_via_appointments",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "appointment_reports.r03.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "appointment_reports.r03.s02.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. Both options enabled on this report (nothing greyed in the capture); applied to the appointment office (rule d03).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r03.s02.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read. Filters the appointment office (rpt_appointment_facts.office_id; rpt_lab_cases.office_id on the lab reports).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r03.s03.c01",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range; date_basis is fixed per report or chosen by the basis radio of the same section. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "appointment_reports.r03.s03.c02",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range, inclusive end. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "appointment_reports.r04",
+   "legacy_name": "Lab Report",
+   "report_key": "appointment.lab_report",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "appointment_reports.r04.s01.c01",
+     "signature_id": "sig0019",
+     "legacy_section": "REPORT TYPE",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Appointment List",
+      "Not Sent",
+      "Not Received",
+      "Due Date"
+     ],
+     "legacy_default": "Appointment List",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "report_type",
+     "param_type": "enum",
+     "option_map": {
+      "Appointment List": "appointment_list",
+      "Not Sent": "not_sent",
+      "Not Received": "not_received",
+      "Due Date": "due_date"
+     },
+     "default": "appointment_list",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Selects the report variant. Only the Appointment List state was captured."
+    },
+    {
+     "control_id": "appointment_reports.r04.s02.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "appointment_reports.r04.s03.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. Both options enabled on this report (nothing greyed in the capture); applied to the appointment office (rule d03).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r04.s03.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read. Filters the appointment office (rpt_appointment_facts.office_id; rpt_lab_cases.office_id on the lab reports).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r04.s04.c01",
+     "signature_id": "sig0004",
+     "legacy_section": "PROVIDER",
+     "legacy_label": "Provider",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool. Provider role (line, appointment, preferred) is declared per report. Role appointment on this report: the appointment provider; roster-first list, never scoped by providers.office_id.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r04.s05.c01",
+     "signature_id": "sig0020",
+     "legacy_section": "DUE DATE",
+     "legacy_label": "Due Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "due_date",
+     "param_type": "date",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "report_type == due_date",
+     "notes": "Rule inferred (greyed with Appointment List in our capture). Override of 04 9.3 row 10 (report_type != appointment_list, inferred): the research notes (Lab Report, criteria table) infer the box is disabled unless REPORT TYPE = Due Date, and the old menu report Appointment List - Lab due date is the only documented use of a due date; no source gives the box a meaning for Not Sent or Not Received (the Not Received vendor screenshot shows a date in the box but its state is unreadable, and a greyed box also shows a date). Narrower rule chosen so that an undefined filter never reaches the builder; aligning 04 9.3 row 10 and the 04 DUE DATE row is part of RPT-APPT-21. Single date on rpt_lab_cases.lab_due_on (equality, the cases due on that day - unverified); APPOINTMENT DATE RANGE is disabled with Due Date (r04.s07 rule). Confirm on the live tool which report types enable it.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r04.s06.c01",
+     "signature_id": "sig0021",
+     "legacy_section": "LAB",
+     "legacy_label": "Lab",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "lab_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool."
+    },
+    {
+     "control_id": "appointment_reports.r04.s07.c01",
+     "signature_id": "sig0022",
+     "legacy_section": "APPOINTMENT DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "report_type != due_date",
+     "notes": "Range on the date of the appointment that carries the lab case (rpt_lab_cases.appointment_date), office-local. Disabled with REPORT TYPE = Due Date (inferred): that type lists the cases due on DUE DATE whatever their appointment date, and the disabled range (disabled_value = the default) is not applied by the due_date branch. Confirm on the live tool (Lab Report open question 1). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r04.s07.c02",
+     "signature_id": "sig0023",
+     "legacy_section": "APPOINTMENT DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "report_type != due_date",
+     "notes": "Inclusive end of the appointment-date range. Disabled with REPORT TYPE = Due Date (inferred): that type lists the cases due on DUE DATE whatever their appointment date, and the disabled range (disabled_value = the default) is not applied by the due_date branch. Confirm on the live tool (Lab Report open question 1). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r04.s08.c01",
+     "signature_id": "sig0007",
+     "legacy_section": "EXCLUDE PATIENT TYPE",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "None",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "exclude_patient_type_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "none",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Exclude filter: None = exclude nothing; rows whose value is in the list are dropped. Dialog content was never captured - confirm on the live tool. Patients without a type are kept; no_type_defined drops them.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r04.s09.c01",
+     "signature_id": "sig0008",
+     "legacy_section": "EXCLUDE RESP. PARTY TYPE",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "None",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "exclude_resp_party_type_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "none",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Exclude filter: None = exclude nothing; rows whose value is in the list are dropped. Dialog content was never captured - confirm on the live tool."
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r04.s01.c01",
+     "text": "REPORT TYPE = Appointment List is the former report Appointment List – Lab: all appointments in the range that carry a lab case."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r04.s01.c01",
+     "text": "REPORT TYPE = Not Sent is the former report Lab Required Not Sent Appointment List: a lab case is required but has no sent date."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r04.s01.c01",
+     "text": "REPORT TYPE = Not Received is the former report Lab Sent Not Received Appointment List: cases sent to the lab and not yet received."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r04.s01.c01",
+     "text": "REPORT TYPE = Due Date is the former report Appointment List - Lab due date. That it lists the cases due on the single DUE DATE chosen is unverified (see unresolved)."
+    },
+    {
+     "about": "other",
+     "control_id": "appointment_reports.r04.s05.c01",
+     "text": "A vendor screenshot taken with REPORT TYPE = Not Received also shows a date in the DUE DATE box; whether the box is enabled there cannot be read. The rule that enables it therefore stays unverified (see unresolved)."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r04.s07.c01",
+     "text": "APPOINTMENT DATE RANGE filters on the date of the appointment that carries the lab case (the lab data are fields of that appointment)."
+    },
+    {
+     "about": "other",
+     "control_id": "",
+     "text": "Hidden population rule with no criteria control: a lab case exists only as lab fields on one appointment (the impression or the delivery appointment - the office chooses); an appointment without those fields never appears on the report."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "appointment_reports.r05",
+   "legacy_name": "SmartAssist Report Card",
+   "report_key": "appointment.smartassist_report_card",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "appointment_reports.r05.s01.c01",
+     "signature_id": "sig0024",
+     "legacy_section": "REPORT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Detail",
+      "Summary"
+     ],
+     "legacy_default": "Detail",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "report_format",
+     "param_type": "enum",
+     "option_map": {
+      "Detail": "detail",
+      "Summary": "summary"
+     },
+     "default": "detail",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Detail = one row per appointment (block card_detail, title SmartAssist Report Card - Detail, DOCUMENTED); Summary = percentage rows per office and provider without patient rows (block card_summary, title SmartAssist Report Card - Summary, layout INFERRED: not seen in vendor material). Nothing greyed in the capture; whether Summary greys any control is unknown (catalog open question 1).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r05.s02.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "appointment_reports.r05.s03.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. Both options enabled on this report (nothing greyed in the capture); applied to the appointment office (rule d03).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r05.s03.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read. Filters the appointment office (rpt_appointment_facts.office_id; rpt_lab_cases.office_id on the lab reports).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r05.s04.c01",
+     "signature_id": "sig0004",
+     "legacy_section": "PROVIDER",
+     "legacy_label": "Provider",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool. Provider role (line, appointment, preferred) is declared per report. Role appointment on this report: the appointment provider; roster-first list, never scoped by providers.office_id.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r05.s05.c01",
+     "signature_id": "sig0022",
+     "legacy_section": "APPOINTMENT DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Range on rpt_appointment_facts.appointment_date (fixed basis), office-local. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r05.s05.c02",
+     "signature_id": "sig0023",
+     "legacy_section": "APPOINTMENT DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Inclusive end of the appointment-date range. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r05.s06.c01",
+     "signature_id": "sig0025",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include Missed Appointments",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_missed_appointments",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Unticked (default): population = status_class = 'completed' OR (status_class = 'past_unresolved' AND is_kept) - checked in through checked out, or posted procedures (on migrated rows the same-day visit charge). Ticked: adds every other not-cancelled row (no_show, past_unresolved not kept, in_office, confirmed, unconfirmed, scheduled), future appointments included. Cancelled rows depend on Include Cancelled Appointments only. Whether an in_office row needs the tick is unverified (catalog open question 5).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r05.s06.c02",
+     "signature_id": "sig0026",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include Cancelled Appointments",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_cancelled_appointments",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r05.s05.c01",
+     "text": "APPOINTMENT DATE RANGE is matched on the appointment date. A range in the future returns rows only when Include Missed Appointments is ticked."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r05.s06.c01",
+     "text": "Include Missed Appointments adds the appointments that did not go from checked in through checked out, or that have no posted procedures - future appointments included."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r05.s03.c02",
+     "text": "Selecting several offices does not widen what a check reads: every appointment is checked only against the data of its own office (OID), so a note or a next appointment that exists in another office counts as missing."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r05.s06.c02",
+     "text": "Include Cancelled Appointments adds the cancelled appointments to the report card; without the tick they are left out."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "appointment_reports.r06",
+   "legacy_name": "Appointments Confirmed Via Vendors",
+   "report_key": "appointment.appointments_confirmed_via_vendors",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "appointment_reports.r06.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "appointment_reports.r06.s02.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. Both options enabled on this report (nothing greyed in the capture); applied to the appointment office (rule d03).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r06.s02.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read. Filters the appointment office (rpt_appointment_facts.office_id; rpt_lab_cases.office_id on the lab reports).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r06.s03.c01",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Basis inferred: rpt_appointment_facts.appointment_date (04 7.2 row 4); the alternative reading, the confirmation date, is offered as the enhancement date_basis = confirmed_date (NEW value of 04 7.3). Confirm on the live tool (catalog open question 2). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r06.s03.c02",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Inclusive end; basis inferred as Start Date. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r06.s04.c01",
+     "signature_id": "sig0027",
+     "legacy_section": "VENDORS",
+     "legacy_label": "Vendors",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "vendor_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool. Vendor = third-party service that confirmed the appointment; no such entity exists yet (new lookup)."
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "appointment_reports.r07",
+   "legacy_name": "Appointment Time Stamps",
+   "report_key": "appointment.appointment_time_stamps",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "appointment_reports.r07.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "appointment_reports.r07.s02.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. Both options enabled on this report (nothing greyed in the capture); applied to the appointment office (rule d03).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r07.s02.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read. Filters the appointment office (rpt_appointment_facts.office_id; rpt_lab_cases.office_id on the lab reports).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r07.s03.c01",
+     "signature_id": "sig0004",
+     "legacy_section": "PROVIDER",
+     "legacy_label": "Provider",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool. Provider role (line, appointment, preferred) is declared per report. Role appointment on this report: the appointment provider; roster-first list, never scoped by providers.office_id.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r07.s04.c01",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range; date_basis is fixed per report or chosen by the basis radio of the same section. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "appointment_reports.r07.s04.c02",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range, inclusive end. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "appointment_reports.r08",
+   "legacy_name": "Appointment Detail",
+   "report_key": "appointment.appointment_detail",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "appointment_reports.r08.s01.c01",
+     "signature_id": "sig0028",
+     "legacy_section": "APPOINTMENT TYPE",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Regular",
+      "Archived"
+     ],
+     "legacy_default": "Regular",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "appointment_set",
+     "param_type": "enum",
+     "option_map": {
+      "Regular": "regular",
+      "Archived": "archived"
+     },
+     "default": "regular",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Regular = live appointments (NOT is_legacy_archive); Archived = the migrated legacy archive partition (rpt_appointment_facts.is_legacy_archive, loaded from APPTH_ARCHIVE). On app rows appointments.is_archived means deleted, never archived (03 3.6): deleted appointments are excluded under both options, as in the legacy tool. Archived returns migrated history only; app-era appointments are never archived. Meaning of Archived in the legacy tool is unverified (research 10 #5) - confirm.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r08.s02.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "appointment_reports.r08.s03.c01",
+     "signature_id": "sig0029",
+     "legacy_section": "APPOINT NOW",
+     "legacy_label": "Only AppointNow Appointments",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "only_appointnow_appointments",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "appointment_reports.r08.s03.c02",
+     "signature_id": "sig0030",
+     "legacy_section": "APPOINT NOW",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Both",
+      "Appoint Now",
+      "Appoint Now API"
+     ],
+     "legacy_default": "Both",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "appointnow_source",
+     "param_type": "enum",
+     "option_map": {
+      "Both": "both",
+      "Appoint Now": "appoint_now",
+      "Appoint Now API": "appoint_now_api"
+     },
+     "default": "both",
+     "default_differs_reason": "",
+     "enabled_when": "only_appointnow_appointments == true",
+     "notes": ""
+    },
+    {
+     "control_id": "appointment_reports.r08.s04.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. Both options enabled on this report (nothing greyed in the capture); applied to the appointment office (rule d03).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r08.s04.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read. Filters the appointment office (rpt_appointment_facts.office_id; rpt_lab_cases.office_id on the lab reports).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r08.s05.c01",
+     "signature_id": "sig0031",
+     "legacy_section": "PROVIDER/USER",
+     "legacy_label": "Provider",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool."
+    },
+    {
+     "control_id": "appointment_reports.r08.s05.c02",
+     "signature_id": "sig0032",
+     "legacy_section": "PROVIDER/USER",
+     "legacy_label": "User",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "user_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "only_appointnow_appointments == false",
+     "notes": "User role = the user who created the appointment (rpt_appointment_facts.created_by_user_id -> rpt_user_dim.user_key); vendor documentation: the report reviews the appointments created by a user. Migrated appointments carry no creating user and match only under all (APP). AppointNow bookings belong to the system user shown as Appoint Now (legacy login _APPOINTNOWPAT_): whether the legacy picker lists it is unknown. Disabled while only_appointnow_appointments is true (vendor screenshot).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r08.s06.c01",
+     "signature_id": "sig0033",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Appointment Date",
+      "Created On Date"
+     ],
+     "legacy_default": "Appointment Date",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "date_basis",
+     "param_type": "enum",
+     "option_map": {
+      "Appointment Date": "appointment_date",
+      "Created On Date": "created_date"
+     },
+     "default": "appointment_date",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "appointment_reports.r08.s06.c02",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range; date_basis is fixed per report or chosen by the basis radio of the same section. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "appointment_reports.r08.s06.c03",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range, inclusive end. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "appointment_reports.r08.s07.c01",
+     "signature_id": "sig0010",
+     "legacy_section": "OPERATORY",
+     "legacy_label": "Operatory",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "operatory_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool."
+    },
+    {
+     "control_id": "appointment_reports.r08.s08.c01",
+     "signature_id": "sig0034",
+     "legacy_section": "GROUP BY",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Provider",
+      "User"
+     ],
+     "legacy_default": "Provider",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "group_by",
+     "param_type": "enum",
+     "option_map": {
+      "Provider": "provider",
+      "User": "user"
+     },
+     "default": "provider",
+     "default_differs_reason": "",
+     "enabled_when": "only_appointnow_appointments == false",
+     "notes": ""
+    },
+    {
+     "control_id": "appointment_reports.r08.s09.c01",
+     "signature_id": "sig0035",
+     "legacy_section": "PAGE BREAK BY",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "None",
+      "Date",
+      "Provider",
+      "User"
+     ],
+     "legacy_default": "None",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "page_break_by",
+     "param_type": "enum",
+     "option_map": {
+      "None": "none",
+      "Date": "date",
+      "Provider": "provider",
+      "User": "user"
+     },
+     "default": "none",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "The User option is greyed while GROUP BY = Provider.",
+     "option_enabled_when": {
+      "user": "group_by == user"
+     }
+    },
+    {
+     "control_id": "appointment_reports.r08.s10.c01",
+     "signature_id": "sig0026",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include Cancelled Appointments",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_cancelled_appointments",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "appointment_reports.r08.s10.c02",
+     "signature_id": "sig0036",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include Patient Phone Number",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_patient_phone_number",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "appointment_reports.r08.s10.c03",
+     "signature_id": "sig0037",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "[?]",
+     "legacy_type": "other",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "superseded",
+     "param": "include_patient_home_office",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Clipped third row of OTHER OPTIONS in our capture. Vendor screenshots identify it as the checkbox Include Patient Home Office, recorded as appointment_reports.r08.x01 and mapped there (one control, not two). This placeholder row adds no parameter of its own.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r08.s11.c01",
+     "signature_id": "sig0009",
+     "legacy_section": "CANCELLATION REASON",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "cancellation_reason_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "include_cancelled_appointments == true",
+     "notes": "Rule inferred: greyed while Include Cancelled Appointments is unticked in our capture; the unlock was not observed (catalog open question 5). Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool. Applies to cancelled rows only.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r08.x01",
+     "signature_id": null,
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include Patient Home Office",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "vendor_doc",
+     "vendor_doc_confidence": "confirmed",
+     "vendor_doc_evidence": "The clipped third row of `OTHER OPTIONS` is `Include Patient Home Office`; nothing follows it.",
+     "legacy_notes": "This is the control behind the clipped placeholder row appointment_reports.r08.s10.c03 ([?]) of the inventory: the third row of OTHER OPTIONS, which the action bar hides in our capture. Vendor screenshots of the criteria screen show it. Taken as a checkbox because it is the third option of the OTHER OPTIONS checkbox column; its default (ticked or not) is not stated and what it prints is unverified.",
+     "status": "replicated",
+     "param": "include_patient_home_office",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "legacy default not documented (vendor screenshots); unticked like the other OTHER OPTIONS rows, confirm on the live tool",
+     "enabled_when": "",
+     "notes": "VENDOR-DOC: third OTHER OPTIONS row of Appointment Detail (vendor screenshots 2023, 2026). Legacy default not documented: the definition uses false (unticked, like the two other rows of the column) until confirmed. Meaning unverified: read as a layout switch that prints the patient's home office (rpt_appointment_facts.patient_home_office_id -> rpt_office_dim.office_name) beside the appointment office; the alternative reading - widen the office filter to patients whose home office is selected - must be ruled out on the live tool. Role query (adds a column).",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "appointment_reports.r08.d01",
+     "legacy_when": "Only AppointNow Appointments is ticked",
+     "legacy_effect": "The three radios Both / Appoint Now / Appoint Now API become enabled; the User picker and both GROUP BY radios (Provider / User) are disabled.",
+     "confidence": "confirmed",
+     "new_behavior": "only_appointnow_appointments = true enables appointnow_source (enabled_when only_appointnow_appointments == true; otherwise disabled_value both) and disables user_ids and group_by (enabled_when only_appointnow_appointments == false; disabled values all and provider). The printed title becomes Appointment Detail (For Only AppointNow Appointments) through title_templates, and the main block groups Office -> User Appoint Now -> Provider -> day band as in the legacy sample. The AppointNow block takes its level list from only_appointnow_appointments, never from group_by: it ignores the (disabled) group_by value."
+    }
+   ],
+   "legacy_corrections": [
+    {
+     "about": "truncation",
+     "control_id": "",
+     "text": "The row that the action bar cuts off is the third and last row of OTHER OPTIONS, Include Patient Home Office (see added_controls); nothing follows it, so with that control the criteria panel is complete."
+    },
+    {
+     "about": "label",
+     "control_id": "appointment_reports.r08.s10.c03",
+     "text": "The placeholder control [?] (clipped third row of OTHER OPTIONS) is the checkbox Include Patient Home Office recorded under added_controls - one control, not two."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r08.s03.c01",
+     "text": "Only AppointNow Appointments restricts the report to online (AppointNow) bookings."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r08.s03.c02",
+     "text": "Appoint Now API selects the bookings made by third parties through the AppointNow API."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r08.s05.c02",
+     "text": "User refers to the user who created the appointment: the vendor uses the report to review the appointments created by a user."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r08.s06.c01",
+     "text": "The radio chooses the date basis of the range: the date of the appointment (Appointment Date) or the date the appointment was created (Created On Date)."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r08.s10.c01",
+     "text": "Without the tick the report lists the non-cancelled appointments only - missed ones are included; Include Cancelled Appointments adds the cancelled ones."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r08.s08.c01",
+     "text": "GROUP BY sets the first grouping level under the office: Provider or User."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r08.s08.c01",
+     "text": "The pre-2021 menu reports Appointment Details Report and Appointment Detail By User are this report; the by-user one corresponds to GROUP BY = User (a restricted variant, Appointment Detail by User, also lives in My Reports)."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r08.s06.c01",
+     "text": "Created dates are stored in Pacific (server) time with no office-local conversion, so DATE RANGE = Created On Date is matched on the Pacific-time creation date."
+    },
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r08.s10.c02",
+     "text": "Include Patient Phone Number adds the patient phone numbers to the listing."
+    },
+    {
+     "about": "other",
+     "control_id": "",
+     "text": "Hidden population rule with no criteria control: deleted appointments never appear on this report (stated by the document for every appointment report - see Appointment List)."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "appointment_reports.r09",
+   "legacy_name": "Lab Cost Report",
+   "report_key": "appointment.lab_cost_report",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "appointment_reports.r09.s01.c01",
+     "signature_id": "sig0038",
+     "legacy_section": "REPORT TYPE",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "All",
+      "Sent Date",
+      "Due Date",
+      "Received Date"
+     ],
+     "legacy_default": "All",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "date_basis",
+     "param_type": "enum",
+     "option_map": {
+      "All": "appointment_date",
+      "Sent Date": "lab_sent_date",
+      "Due Date": "lab_due_date",
+      "Received Date": "lab_received_date"
+     },
+     "default": "appointment_date",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy title REPORT TYPE, but the radio is the date basis of the APPOINTMENT DATE RANGE below it (vendor documentation; the section keeps its title whichever option is chosen). Sent Date / Due Date / Received Date -> rpt_lab_cases.lab_sent_on / lab_due_on / lab_received_on. All -> appointment_date is unverified (04 7.3, to confirm): the alternative reading - the range matches any of the four dates - must be checked on the live tool. The vendor recommends Received Date for the monthly lab cost run. Same choice as date_basis of the existing lab cost report endpoint (appointment / sent / due / received). If the live tool shows the any-of-four reading, the option value any_lab_date (NEW, owner 04 7.3) is reserved for it.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r09.s02.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "appointment_reports.r09.s03.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. Both options enabled on this report (nothing greyed in the capture); applied to the appointment office (rule d03).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r09.s03.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read. Filters the appointment office (rpt_appointment_facts.office_id; rpt_lab_cases.office_id on the lab reports).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r09.s04.c01",
+     "signature_id": "sig0004",
+     "legacy_section": "PROVIDER",
+     "legacy_label": "Provider",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool. Provider role (line, appointment, preferred) is declared per report. Role appointment on this report: the appointment provider; roster-first list, never scoped by providers.office_id.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r09.s05.c01",
+     "signature_id": "sig0021",
+     "legacy_section": "LAB",
+     "legacy_label": "Lab",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "lab_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool."
+    },
+    {
+     "control_id": "appointment_reports.r09.s06.c01",
+     "signature_id": "sig0022",
+     "legacy_section": "APPOINTMENT DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Basis chosen by REPORT TYPE (date_basis): appointment_date, lab_sent_on, lab_due_on or lab_received_on of rpt_lab_cases; the section keeps its legacy title APPOINTMENT DATE RANGE whatever the basis. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r09.s06.c02",
+     "signature_id": "sig0023",
+     "legacy_section": "APPOINTMENT DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Inclusive end; basis chosen by REPORT TYPE (date_basis). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r09.s07.c01",
+     "signature_id": "sig0007",
+     "legacy_section": "EXCLUDE PATIENT TYPE",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "None",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "exclude_patient_type_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "none",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Exclude filter: None = exclude nothing; rows whose value is in the list are dropped. Dialog content was never captured - confirm on the live tool. Patients without a type are kept; no_type_defined drops them.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "appointment_reports.r09.s08.c01",
+     "signature_id": "sig0008",
+     "legacy_section": "EXCLUDE RESP. PARTY TYPE",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "None",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "exclude_resp_party_type_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "none",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Exclude filter: None = exclude nothing; rows whose value is in the list are dropped. Dialog content was never captured - confirm on the live tool."
+    },
+    {
+     "control_id": "appointment_reports.r09.s09.c01",
+     "signature_id": "sig0039",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Exclude Lab Received",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "exclude_lab_received",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "appointment_reports.r09.s01.c01",
+     "text": "REPORT TYPE chooses which date the range is matched against (Sent Date, Due Date or Received Date); the date section keeps the title APPOINTMENT DATE RANGE whichever is chosen. The vendor recommends Received Date. What All matches is unverified (see unresolved)."
+    },
+    {
+     "about": "other",
+     "control_id": "",
+     "text": "Hidden population rule with no criteria control: the lab reports read the lab fields stored on the appointment (Lab, Lab Cost, Sent on, Due on, Recvd. on); a case that is not recorded in those fields never appears on the report."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  }
+ ]
+}

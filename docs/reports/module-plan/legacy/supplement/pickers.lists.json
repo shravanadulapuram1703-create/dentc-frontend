@@ -1,0 +1,419 @@
+{
+  "source_document": "research/legacy_report_outputs_lists.md",
+  "dialogs": [
+    {
+      "dialog_name": "SELECT picker dialogs - common behaviour (legacy titles not documented)",
+      "kind": "picker_dialog",
+      "opened_from": "Any read-only criteria box > SELECT (PROVIDER, PREFERRED PROVIDER, INCLUDE PATIENT TYPE, PRINT NOTES, USER, SECURITY GROUP > Group, EMPLOYER, CARRIER)",
+      "used_by": [
+        "patients_list_reports",
+        "providers_list_reports",
+        "security_list_reports",
+        "setup_list_reports"
+      ],
+      "elements": [
+        {
+          "label": "Include All",
+          "type": "checkbox",
+          "options": [],
+          "notes": "Ticked when the dialog opens (the criteria box then shows ALL). To narrow the selection, click SELECT and untick Include All."
+        }
+      ],
+      "values": [],
+      "confidence": "confirmed",
+      "evidence_quote": "Pickers default to \"Include All\"; to narrow, click `SELECT` and untick `Include All`.",
+      "notes": "The one element this document states for the pickers in general (vendor article on the new reports menu). For the USER, EMPLOYER and CARRIER pickers of the Security and Setup lists nothing else is documented. The EXCLUDE PATIENT TYPE and EXCLUDE RESPONSIBLE PARTY TYPE boxes show None and the office box shows the current OID in our captures; whether and how Include All applies to those dialogs is not documented. Titles, sort options, search fields and list columns of the dialogs are not described in this document."
+    },
+    {
+      "dialog_name": "OFFICE/GROUP SELECT dialog (legacy title not documented)",
+      "kind": "picker_dialog",
+      "opened_from": "OFFICE/GROUP > SELECT (the same control is headed LOCATION on User-Group Membership)",
+      "used_by": [
+        "patients_list_reports",
+        "providers_list_reports",
+        "security_list_reports",
+        "setup_list_reports"
+      ],
+      "elements": [
+        {
+          "label": "office list (Office mode)",
+          "type": "list",
+          "options": [],
+          "notes": "With the Office radio the dialog picks offices; the criteria box defaults to the current OID. More than one office can be chosen (the document notes that multi-office selection replaced the old Group Reports menu)."
+        },
+        {
+          "label": "office group list (Office Group mode)",
+          "type": "list",
+          "options": [],
+          "notes": "With the Office Group radio the dialog picks groups defined in Setup > Office Groups (for example regions); when no groups are defined, a group run covers all offices of the account."
+        }
+      ],
+      "values": [],
+      "confidence": "likely",
+      "evidence_quote": "`Office` picks offices (default the current OID). `Office Group` picks groups defined in `Setup > Office Groups` (for example regions); without groups a group run covers all offices of the account.",
+      "notes": "Only the scope of the two modes is stated (vendor articles on office groups and on the new reports menu). The dialog itself - title, checkboxes, sort options, search field, list columns - is not described in this document."
+    },
+    {
+      "dialog_name": "PROVIDER SELECT dialog (legacy title not documented)",
+      "kind": "picker_dialog",
+      "opened_from": "PROVIDER > SELECT; PREFERRED PROVIDER > SELECT",
+      "used_by": [
+        "patients_list_reports",
+        "providers_list_reports"
+      ],
+      "elements": [
+        {
+          "label": "provider list",
+          "type": "list",
+          "options": [],
+          "notes": "Multi-select. Which provider relation the selection is applied to depends on the report; in Last Visit mode of Patient List - Grouped By a radio beside the picker chooses Preferred Provider or Treating Provider."
+        }
+      ],
+      "values": [],
+      "confidence": "likely",
+      "evidence_quote": "`PROVIDER` / `PREFERRED PROVIDER` | Provider multi-select.",
+      "notes": "Opens on Include All like the other pickers (see the common-behaviour entry). The dialog itself - title, checkboxes, sort options, search field, list columns - is not described in this document."
+    },
+    {
+      "dialog_name": "PATIENT TYPE SELECT dialog (legacy title not documented)",
+      "kind": "picker_dialog",
+      "opened_from": "INCLUDE PATIENT TYPE > SELECT; EXCLUDE PATIENT TYPE > SELECT",
+      "used_by": [
+        "patients_list_reports"
+      ],
+      "elements": [
+        {
+          "label": "patient type list",
+          "type": "list",
+          "options": [],
+          "notes": "The account's patient types: optional report tags (a two-character Type Code plus a Description), of which a patient can carry up to six - tenant data, no fixed list. Older build: the pickers of the old screens offered No Type Defined as a selectable value; whether the current dialog still lists it is not documented, so it is not recorded as a value."
+        }
+      ],
+      "values": [],
+      "confidence": "likely",
+      "evidence_quote": "Patient types are optional report tags; a patient can carry up to six.",
+      "notes": "The document states what patient types are and what the old pickers offered; the current dialog was not seen. The dialog itself - title, checkboxes, sort options, search field, list columns - is not described in this document."
+    },
+    {
+      "dialog_name": "EXCLUDE RESPONSIBLE PARTY TYPE SELECT dialog (legacy title not documented)",
+      "kind": "picker_dialog",
+      "opened_from": "EXCLUDE RESPONSIBLE PARTY TYPE > SELECT (Responsible Party List)",
+      "used_by": [
+        "patients_list_reports"
+      ],
+      "elements": [
+        {
+          "label": "responsible party type list",
+          "type": "list",
+          "options": [
+            "Cash",
+            "Collections",
+            "Discount Plan",
+            "No Type Defined"
+          ],
+          "notes": "Billing types of the account; every account carries exactly one, mandatory, type. EXAMPLES only (values seen in the vendor's material), not a fixed list - tenant data."
+        }
+      ],
+      "values": [],
+      "confidence": "likely",
+      "evidence_quote": "Exactly one mandatory type per account (billing type; examples `Cash`, `Collections`, `Discount Plan`, `No Type Defined`).",
+      "notes": "The document states what the responsible party type is and names examples; that this picker lists those types follows from the name of the criterion. The dialog itself - title, checkboxes, sort options, search field, list columns - is not described in this document."
+    },
+    {
+      "dialog_name": "PRINT NOTES SELECT dialog (legacy title not documented)",
+      "kind": "picker_dialog",
+      "opened_from": "PRINT NOTES > SELECT (Patient's Notes)",
+      "used_by": [
+        "patients_list_reports"
+      ],
+      "elements": [
+        {
+          "label": "note type list",
+          "type": "list",
+          "options": [
+            "ALL",
+            "Patient Notes",
+            "Resp. Party Notes"
+          ],
+          "notes": "PARTIAL: the first entries of the list box of the 2020 screen, in order; the document ends the list with an ellipsis. The printed Note Type column of the vendor sample also shows Financial Notes and Chart Notes."
+        }
+      ],
+      "values": [],
+      "confidence": "likely",
+      "evidence_quote": "The 2020 list box starts `ALL`, `Patient Notes`, `Resp. Party Notes`,",
+      "notes": "The values are note types. On the 2020 screen the selector was a list box on the criteria screen itself; on the current screen it is a read-only box (ALL) with SELECT, and the dialog behind it was not seen. Related vendor text: users can add Patient Notes, Responsible Party Notes and Financial Notes by hand, and the printed Note Type column of the 2011 sample shows Patient Notes, Responsible Party Notes, Financial Notes and Chart Notes - the full list of the current dialog is not documented."
+    },
+    {
+      "dialog_name": "Patient SEARCH lookup (legacy title not documented)",
+      "kind": "picker_dialog",
+      "opened_from": "PATIENT > Patient box + SEARCH (Patient's Notes)",
+      "used_by": [
+        "patients_list_reports"
+      ],
+      "elements": [
+        {
+          "label": "matching patients",
+          "type": "list",
+          "options": [],
+          "notes": "Result of the search; one patient is picked from it. Columns not documented."
+        }
+      ],
+      "values": [],
+      "confidence": "likely",
+      "evidence_quote": "`Patient` + `SEARCH` | Mandatory single patient: type the last name, search, pick.",
+      "notes": "Only the sequence is stated: type the last name in the Patient box of the criteria screen, press SEARCH, pick the patient. A single patient is mandatory. The dialog itself - title, checkboxes, sort options, search field, list columns - is not described in this document."
+    },
+    {
+      "dialog_name": "SECURITY GROUP SELECT dialog (legacy title not documented)",
+      "kind": "picker_dialog",
+      "opened_from": "SECURITY GROUP > Group > SELECT (User-Group Membership)",
+      "used_by": [
+        "security_list_reports"
+      ],
+      "elements": [
+        {
+          "label": "security group list",
+          "type": "list",
+          "options": [
+            "Clerical",
+            "Clinical",
+            "Office Manager",
+            "Time Clock Only",
+            "Administrators"
+          ],
+          "notes": "Security groups are defined per office, so the same group name can exist under every office. EXAMPLES only: the preloaded groups the vendor names (there is also a vendor services group whose name is not quoted) and Administrators, which appears in the vendor sample; accounts add their own groups."
+        }
+      ],
+      "values": [],
+      "confidence": "likely",
+      "evidence_quote": "`Clinical`, `Office Manager`, `Time Clock Only` and a vendor services group; `Administrators` appears in the sample",
+      "notes": "The document states what security groups are and names preloaded ones (Clerical is named on the preceding line of the document); that this picker lists the groups follows from the name of the criterion - the report itself is absent from vendor documentation. Opens on Include All per the common picker behaviour. The dialog itself - title, checkboxes, sort options, search field, list columns - is not described in this document."
+    },
+    {
+      "dialog_name": "REPORT BY dropdown (Patient List - New Patient)",
+      "kind": "dropdown_list",
+      "opened_from": "Patient List - New Patient > REPORT BY",
+      "used_by": [
+        "patients_list_reports"
+      ],
+      "elements": [],
+      "values": [
+        "Appointment",
+        "Carrier",
+        "Created Date / First Visit Date",
+        "Referral",
+        "Referral Type"
+      ],
+      "confidence": "confirmed",
+      "evidence_quote": "`Patient List - New Patient` = `Appointment`, `Carrier`, `Created Date / First Visit Date`, `Referral`,",
+      "notes": "Complete list of five values, read by the research pass from a 2022 vendor screenshot of the opened dropdown; order as listed. Appointment is the default. Created Date / First Visit Date is ONE value whose name contains a slash. The fifth value, Referral Type, stands on the following line of the document."
+    },
+    {
+      "dialog_name": "REPORT BY dropdown (Patient List - Grouped By)",
+      "kind": "dropdown_list",
+      "opened_from": "Patient List - Grouped By > REPORT BY",
+      "used_by": [
+        "patients_list_reports"
+      ],
+      "elements": [],
+      "values": [
+        "Attached to Provider",
+        "Birthdate",
+        "Carrier",
+        "Employer",
+        "Fee Schedule",
+        "HIPAA Agreement",
+        "Insurance Plan",
+        "Last Visit",
+        "Medical Alert",
+        "Patient Type",
+        "Preferred Provider",
+        "Uninsured",
+        "Zip Code"
+      ],
+      "confidence": "confirmed",
+      "evidence_quote": "`Patient List - Grouped By` = 13 values (`Attached to Provider`, `Birthdate`, `Carrier`, `Employer`,",
+      "notes": "Complete list of 13 values, read by the research pass from vendor screenshots of the opened dropdown (2022 and 2023); order as listed. Attached to Provider is the default. The list continues on the next two lines of the document. The criteria panel changes with the value (Last Visit is documented; 11 modes were not captured)."
+    },
+    {
+      "dialog_name": "REPORT BY dropdown (Responsible Party List)",
+      "kind": "dropdown_list",
+      "opened_from": "Responsible Party List > REPORT BY",
+      "used_by": [
+        "patients_list_reports"
+      ],
+      "elements": [],
+      "values": [
+        "Balance",
+        "Balance Aged Over X Days",
+        "Created Date",
+        "Resp. Party Type",
+        "Send Statement Status",
+        "Zip"
+      ],
+      "confidence": "confirmed",
+      "evidence_quote": "`Responsible Party List` = `Balance`, `Balance Aged Over X Days`,",
+      "notes": "Complete list of six values, taken by the research pass from the vendor article on listing responsible parties; order as listed. Created Date is the default. The list continues on the next line of the document. The criteria panel changes with the value (Send Statement Status is documented; the aged mode only from a 2021 screenshot)."
+    },
+    {
+      "dialog_name": "SEND STATEMENT STATUS dropdown",
+      "kind": "dropdown_list",
+      "opened_from": "Responsible Party List > SEND STATEMENT STATUS (shown only when REPORT BY = Send Statement Status)",
+      "used_by": [
+        "patients_list_reports"
+      ],
+      "elements": [],
+      "values": [
+        "Yes",
+        "No"
+      ],
+      "confidence": "confirmed",
+      "evidence_quote": "Date range replaced by `SEND STATEMENT STATUS` (`Yes` / `No`); `EXCLUDE RESPONSIBLE PARTY TYPE`; inactive-accounts checkbox",
+      "notes": "Read by the research pass from a 2023 vendor screenshot of the Send Statement Status mode. Yes / No is the Send Statement flag of the responsible party. Default not documented."
+    },
+    {
+      "dialog_name": "TYPE dropdown (Credit Codes Report)",
+      "kind": "dropdown_list",
+      "opened_from": "Credit Codes Report > TYPE",
+      "used_by": [
+        "setup_list_reports"
+      ],
+      "elements": [],
+      "values": [
+        "ALL",
+        "Payment",
+        "Adjustment"
+      ],
+      "confidence": "likely",
+      "evidence_quote": "`Type` | `Payment` / `Adjustment`",
+      "notes": "NOT read from the report screen: the dropdown is collapsed on ALL in our capture and no vendor image shows it open. Payment / Adjustment are the vendor-defined values of the Type field of a payment or adjustment type (a credit code), the field this criterion filters; that the dropdown lists exactly these values is implied, not shown. ALL is the captured default."
+    },
+    {
+      "dialog_name": "CLASS dropdown (Credit Codes Report)",
+      "kind": "dropdown_list",
+      "opened_from": "Credit Codes Report > CLASS",
+      "used_by": [
+        "setup_list_reports"
+      ],
+      "elements": [],
+      "values": [
+        "ALL",
+        "None",
+        "Insurance Payment",
+        "Capitation Payment",
+        "Insurance Prev. Bal",
+        "Collection Agency Payment (Transworld)",
+        "Write-Off",
+        "Finance Charge",
+        "Contract Down Payment",
+        "Balance Moved to Contract",
+        "Periodic Contract billing",
+        "Late Charge",
+        "Capitation Adjustment",
+        "Sales Tax",
+        "Insurance Adjustment",
+        "Move Patient (Debit)",
+        "Move Patient (Credit)",
+        "Previous Balance (Debit)",
+        "Previous Balance (Credit)",
+        "Credit Card Refund (TransFirst)",
+        "Treatment plan discount",
+        "Collection Agency Adjustment (Transworld)"
+      ],
+      "confidence": "likely",
+      "evidence_quote": "`Class` | Payments: `None`, `Insurance Payment`, `Capitation Payment`, `Insurance Prev. Bal`, `Collection Agency Payment (Transworld)`. Adjustments: `None`, `Write-Off`, `Finance Charge`, `Contract Down Payment`, `Balance Moved to Contract`, `Periodic Contract billing`, `Late Charge`, `Capitation Adjustment`, `Sales Tax`, `Insurance Adjustment`, `Move Patient (Debit)` / `(Credit)`, `Previous Balance (Debit)` / `(Credit)`, `Credit Card Refund (TransFirst)`, `Treatment plan discount`, `Collection Agency Adjustment (Transworld)`",
+      "notes": "NOT read from the report screen: the dropdown is collapsed on ALL in our capture and no vendor image shows it open. These are the vendor-defined values of the Class field of a payment or adjustment type, the field this criterion filters: for payment types None, Insurance Payment, Capitation Payment, Insurance Prev. Bal, Collection Agency Payment (Transworld); for adjustment types None, Write-Off and the rest of the list. The document abbreviates two pairs - Move Patient (Debit) / (Credit) and Previous Balance (Debit) / (Credit) - which are written out here; None is listed once. Whether the criteria dropdown lists all of them, in which order, and whether its content depends on TYPE is not documented. ALL is the captured default."
+    },
+    {
+      "dialog_name": "SPECIALTY dropdown",
+      "kind": "dropdown_list",
+      "opened_from": "SPECIALTY (Provider List; Patient List - Grouped By in Attached to Provider mode)",
+      "used_by": [
+        "providers_list_reports",
+        "patients_list_reports"
+      ],
+      "elements": [],
+      "values": [
+        "ALL"
+      ],
+      "confidence": "likely",
+      "evidence_quote": "`Specialty` | From a setup list (includes general practice and dental hygienist); also used by the referral manager",
+      "notes": "PARTIAL list: ALL (the captured default) is the only fixed entry known. The provider's Specialty field is filled from a setup list that includes general practice and dental hygienist (the entry names are not quoted); that the criteria dropdown lists that setup list follows from the name of the criterion and is not shown."
+    },
+    {
+      "dialog_name": "CATEGORY dropdown",
+      "kind": "dropdown_list",
+      "opened_from": "CATEGORY (Procedure Codes List; Procedure Codes by Fee Schedule)",
+      "used_by": [
+        "setup_list_reports"
+      ],
+      "elements": [],
+      "values": [
+        "ALL"
+      ],
+      "confidence": "likely",
+      "evidence_quote": "`CATEGORY` (`ALL`) | Codes of one ADA category",
+      "notes": "PARTIAL list: ALL (default) plus one entry per ADA category. The category names are not listed in this document (the ADA Categories setup screen holds a procedure code range and a description per category and is read-only)."
+    },
+    {
+      "dialog_name": "PRODUCTION TYPE dropdown",
+      "kind": "dropdown_list",
+      "opened_from": "PRODUCTION TYPE (Procedure Codes List; Procedure Codes by Fee Schedule)",
+      "used_by": [
+        "setup_list_reports"
+      ],
+      "elements": [],
+      "values": [
+        "ALL"
+      ],
+      "confidence": "likely",
+      "evidence_quote": "`PRODUCTION TYPE` (`ALL`) | Codes of one scheduler production type",
+      "notes": "PARTIAL list: ALL (default) plus one entry per scheduler production type. The type names are not listed in this document."
+    },
+    {
+      "dialog_name": "FEE SCHEDULE dropdown (Fee Schedule List)",
+      "kind": "dropdown_list",
+      "opened_from": "Fee Schedule List > FEE SCHEDULE",
+      "used_by": [
+        "setup_list_reports"
+      ],
+      "elements": [],
+      "values": [
+        "ALL"
+      ],
+      "confidence": "likely",
+      "evidence_quote": "`FEE SCHEDULE` dropdown, default `ALL`; entries show the effective date as `ED`",
+      "notes": "PARTIAL list: ALL (default) plus the account's fee schedules (tenant data). Each entry shows the effective date of the schedule as an ED suffix after the name ([ED: m/d/yyyy] on the 2020 screen). On Procedure Codes by Fee Schedule the FEE SCHEDULE dropdown has no ALL default (a specific schedule is preselected) and the effective date sits in the separate EFFECTIVE DATE dropdown."
+    },
+    {
+      "dialog_name": "CAPITATION FEE SCHEDULE dropdown",
+      "kind": "dropdown_list",
+      "opened_from": "Capitation Fee Schedule > CAPITATION FEE SCHEDULE",
+      "used_by": [
+        "setup_list_reports"
+      ],
+      "elements": [],
+      "values": [
+        "ALL"
+      ],
+      "confidence": "likely",
+      "evidence_quote": "`CAPITATION FEE SCHEDULE` dropdown (`ALL`); entries show the effective date as `ED`",
+      "notes": "PARTIAL list: ALL (default) plus the account's managed-care fee schedules (the vendor's term covers capitation, dental HMO, HMO and Medicaid schedules; tenant data). Each entry shows the effective date as an ED suffix."
+    },
+    {
+      "dialog_name": "MACRO CATEGORY dropdown",
+      "kind": "dropdown_list",
+      "opened_from": "Notes Macros List > MACRO CATEGORY",
+      "used_by": [
+        "setup_list_reports"
+      ],
+      "elements": [],
+      "values": [
+        "ALL"
+      ],
+      "confidence": "likely",
+      "evidence_quote": "Categories that organise notes macros; a category needs only a `Description`. The standard list follows the",
+      "notes": "PARTIAL list: ALL (the captured default) plus the notes-macro categories of the account. The standard list follows the ADA code categories plus a few extras; the exact entries are not quoted. That the criteria dropdown lists these categories follows from the name of the criterion."
+    }
+  ]
+}

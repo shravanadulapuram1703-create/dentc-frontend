@@ -1,0 +1,913 @@
+{
+ "category": "ortho_reports",
+ "reports": [
+  {
+   "report_id": "ortho_reports.r01",
+   "legacy_name": "Ortho Compliance Report",
+   "report_key": "ortho.ortho_compliance_report",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "ortho_reports.r01.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "ortho_reports.r01.s02.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "ortho_reports.r01.s02.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in; default token working_office. On this report the office attribution is the contract office (rpt_ortho_contracts.office_id = ortho_plans.office_id), not the patient's home office and not the office of the last visit [I]. A contract with a NULL office_id is the member 'Unassigned office' (03 section 5.1 rule 3). Selection becomes exactly one of office_ids / office_group_id / office_group_ids; all = every office the caller may read.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "ortho_reports.r01.s03.c01",
+     "signature_id": "sig0004",
+     "legacy_section": "PROVIDER",
+     "legacy_label": "Provider",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL) becomes a searchable multi-select; ALL = no restriction. Provider role on this report: the contract provider rpt_ortho_contracts.provider_id (ortho_plans.pref_provider_id, provider_role 'ortho_contract', NEW role for 04) [I]: the vendor names no provider column for this report. Alternative to confirm on the live tool: provider of the last ortho visit. Never scoped by providers.office_id; roster-first list.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "ortho_reports.r01.s04.c01",
+     "signature_id": "sig0204",
+     "legacy_section": "NUMBER OF WEEKS SINCE LAST VISIT",
+     "legacy_label": "",
+     "legacy_type": "number_input",
+     "legacy_options": [],
+     "legacy_default": "6",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "weeks_since_last_visit",
+     "param_type": "integer",
+     "option_map": {},
+     "default": 6,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Threshold in whole weeks, validation min 0, max 520. Inferred semantics (not documented): a row qualifies when the contract is not soft-deleted (ortho_plans.is_active = true, applied on every grain) and is in treatment (contract_status = 'active', NEW column from DATA-42; until then approximated as coalesce(debond_date, treat_end_date) IS NULL OR >= the office's local today, with warning ortho_contract_status_unavailable), the patient has no live appointment on or after the office's today (rpt_patient_activity.next_appointment_date IS NULL; cancelled / no-show excluded), and weeks_since_last_visit >= threshold, where last visit = rpt_ortho_contracts.last_visit_date (last ortho_visits row of the contract after DATA-42; before: last charge with is_ortho_code AND NOT is_contract_billing, change requested in RPT-ORTHO-02). A contract with no visit at all is listed (weeks shown blank, flagged 'no visit'). Confirm on the live tool: which last visit, >= or >, whether a same-day appointment counts as future, and whether patients with a future appointment are excluded regardless of weeks.",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "other",
+     "control_id": "",
+     "text": "Hidden population rule with no criteria control: the report identifies patients overdue for a visit - patients with an active ortho contract and no future appointment. How the NUMBER OF WEEKS SINCE LAST VISIT threshold combines with that rule is not documented."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "ortho_reports.r02",
+   "legacy_name": "Ortho Daily Journal",
+   "report_key": "ortho.ortho_daily_journal",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "ortho_reports.r02.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "ortho_reports.r02.s02.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "ortho_reports.r02.s02.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in; default token working_office. Office attribution on this report: the office of the ortho visit (ortho_visits.office_id, DATA-42); interim before DATA-42: office of service of the ortho-code charge (rpt_charges.office_id).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "ortho_reports.r02.s03.c01",
+     "signature_id": "sig0004",
+     "legacy_section": "PROVIDER",
+     "legacy_label": "Provider",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog becomes a searchable multi-select; ALL = no restriction. Provider role on this report: the visit doctor (ortho_visits.visit_provider_id, provider_role 'ortho_visit', same column as visit_doctor_ids) [I]: the vendor prints this provider as 'Doctor'; that PROVIDER filters it is not stated (supplement, unresolved). Interim before DATA-42: rpt_charges.provider_id of the ortho-code charge. Never scoped by providers.office_id.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "ortho_reports.r02.s04.c01",
+     "signature_id": "sig0205",
+     "legacy_section": "VISIT DATE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range. This legacy section fixes date_basis = ortho_visit_date (no basis radio). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "ortho_reports.r02.s04.c02",
+     "signature_id": "sig0206",
+     "legacy_section": "VISIT DATE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range. This legacy section fixes date_basis = ortho_visit_date (no basis radio). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "ortho_reports.r03",
+   "legacy_name": "Patients by Ortho Status with Time in Treatment",
+   "report_key": "ortho.patients_by_ortho_status_with_time_in_treatment",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "ortho_reports.r03.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "ortho_reports.r03.s02.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "ortho_reports.r03.s02.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in; default token working_office. Office attribution on this report: the contract office rpt_ortho_contracts.office_id [I]. No PROVIDER control exists on this screen, so a provider-restricted caller is not restricted here (scope.provider_restriction = none).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "ortho_reports.r03.s03.c01",
+     "signature_id": "sig0207",
+     "legacy_section": "ORTHO START DATE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "ortho_start_date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": null,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Optional attribute range ortho_start_date, blank = no restriction (captured blank: the screenshot cannot prove whether blank is the default or the criteria had been cleared - confirm on the live tool). Binds to rpt_ortho_contracts ortho start = coalesce(banding_date, treat_start_date) as 03 section 2.25 defines it; 04 section 3 names treat_start_date alone - 03 owns the column (open question). Contracts without any start date are dropped whenever a bound is set.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "ortho_reports.r03.s03.c02",
+     "signature_id": "sig0208",
+     "legacy_section": "ORTHO START DATE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "ortho_start_date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": null,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "End of the ortho_start_date attribute range, inclusive; blank = open end. Same binding and caveat as the Start Date box.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "ortho_reports.r03.s04.c01",
+     "signature_id": "sig0209",
+     "legacy_section": "PATIENT LAST VISIT",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "ortho_last_visit_date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": null,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Optional attribute range ortho_last_visit_date, blank = no restriction. Vendor: Last Visit on this report = date of service of the last Ortho Treatment Card entry (rpt_ortho_contracts.last_visit_date, last ortho_visits row after DATA-42), not the general last visit (rpt_patient_activity.last_visit_date). A patient without an ortho visit is dropped whenever a bound is set.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "ortho_reports.r03.s04.c02",
+     "signature_id": "sig0210",
+     "legacy_section": "PATIENT LAST VISIT",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "ortho_last_visit_date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": null,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "End of the ortho_last_visit_date attribute range, inclusive; blank = open end.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "ortho_reports.r03.s05.c01",
+     "signature_id": "sig0211",
+     "legacy_section": "ORTHO STATUS",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "ortho_status_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Searchable multi-select on lookup:ortho_statuses (NEW, FLT-09); ALL = no restriction, so contracts without a status are kept; a narrower list drops contracts whose ortho_status_code is NULL (null_policy drop). The legacy value list is not shown in any source; the vocabulary is NEW (DATA-42). Status = the status of the newest ortho treatment plan in the legacy tool; here rpt_ortho_contracts.ortho_status_code.",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "ortho_reports.r04",
+   "legacy_name": "Ortho Report",
+   "report_key": "ortho.ortho_report",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "ortho_reports.r04.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "ortho_reports.r04.s02.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "ortho_reports.r04.s02.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in; default token working_office. Office attribution on this report: the contract office rpt_ortho_contracts.office_id [I]. No PROVIDER control exists on this screen.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "ortho_reports.r04.s03.c01",
+     "signature_id": "sig0207",
+     "legacy_section": "ORTHO START DATE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "ortho_start_date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Attribute range ortho_start_date, legacy default today (date token today in the office time zone). Binds to coalesce(banding_date, treat_start_date) of rpt_ortho_contracts (03 section 2.25; NEW computed column ortho_start_date via RPT-ORTHO-02). Combined with PATIENT FIRST VISIT by AND [I] (04 section 11 open item 'Two ortho ranges'). Every ortho visit belongs to a contract (DATA-42 ortho_visits.ortho_plan_id NOT NULL), so the vendor's second use 'visit but not started' = a contract with first_ortho_visit_date set and ortho_start_date IS NULL, reached with this range blank; confirm the legacy meaning on the live tool.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "ortho_reports.r04.s03.c02",
+     "signature_id": "sig0208",
+     "legacy_section": "ORTHO START DATE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "ortho_start_date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "End of the ortho_start_date attribute range, inclusive; default today.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "ortho_reports.r04.s04.c01",
+     "signature_id": "sig0212",
+     "legacy_section": "PATIENT FIRST VISIT",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "ortho_first_visit_date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Attribute range ortho_first_visit_date, legacy default today. Vendor: First Visit = first Ortho Treatment Card entry (min ortho_visits.visit_date of the patient, NEW column first_ortho_visit_date for rpt_ortho_contracts, owner 03), not the first visit to the practice (rpt_patient_activity.first_visit_date). Combined with ORTHO START DATE by AND [I].",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "ortho_reports.r04.s04.c02",
+     "signature_id": "sig0213",
+     "legacy_section": "PATIENT FIRST VISIT",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "ortho_first_visit_date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "End of the ortho_first_visit_date attribute range, inclusive; default today.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "ortho_reports.r04.s05.c01",
+     "signature_id": "sig0211",
+     "legacy_section": "ORTHO STATUS",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "ortho_status_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Searchable multi-select on lookup:ortho_statuses (NEW, FLT-09); ALL = no restriction (contracts without a status kept); a narrower list drops NULL statuses. Legacy value list unknown (DATA-42 defines the vocabulary).",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "ortho_reports.r05",
+   "legacy_name": "Missing Ortho Visits",
+   "report_key": "ortho.missing_ortho_visits",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "ortho_reports.r05.s01.c01",
+     "signature_id": "sig0214",
+     "legacy_section": "MISSING",
+     "legacy_label": "Ledger Transaction",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "missing_items.ledger_transaction",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Member ledger_transaction of missing_items (enum_multi, options on this report: ledger_transaction, ortho_visit; min_items 1; semantics.full_selection = predicate). Ticked: an appointment qualifies when no live charge exists for the patient in the appointment's office on the appointment date (any is_ledger_code charge; rpt_charges). Inferred rule (supplement, unresolved): a row is listed when at least one ticked item is missing (OR across ticked items).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "ortho_reports.r05.s01.c02",
+     "signature_id": "sig0215",
+     "legacy_section": "MISSING",
+     "legacy_label": "Ortho Visit",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "missing_items.ortho_visit",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Member ortho_visit of missing_items. Ticked: an appointment qualifies when no ortho_visits row (DATA-42) exists for the patient on the appointment date in the appointment's office. Inferred rule: OR across ticked items; both ticked (default) = appointments missing a ledger transaction, an ortho visit, or both.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "ortho_reports.r05.s02.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "ortho_reports.r05.s03.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "ortho_reports.r05.s03.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in; default token working_office. Office attribution on this report: the appointment office rpt_appointment_facts.office_id; ledger and visit tests are matched in the same office on the same day (as the Daily Audit, 03 section 2.17).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "ortho_reports.r05.s04.c01",
+     "signature_id": "sig0216",
+     "legacy_section": "APPOINTMENT PROVIDER",
+     "legacy_label": "Appointment Provider",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "appointment_provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Searchable multi-select; ALL = no restriction. provider_role appointment: rpt_appointment_facts.provider_id (prints as 'Provider'). Never scoped by providers.office_id. Not forced for provider-restricted callers: the family declares scope.provider_restriction = none (PD-11 restricts My Reports and provider dashboards only).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "ortho_reports.r05.s05.c01",
+     "signature_id": "sig0022",
+     "legacy_section": "APPOINTMENT DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range. Basis appointment_date unless the section carries a basis radio (Appointment Detail by User). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "ortho_reports.r05.s05.c02",
+     "signature_id": "sig0023",
+     "legacy_section": "APPOINTMENT DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range, inclusive end. Basis appointment_date unless the section carries a basis radio. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "ortho_reports.r05.s06.c01",
+     "signature_id": "sig0217",
+     "legacy_section": "VISIT DOCTOR",
+     "legacy_label": "Visit Doctor",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "visit_doctor_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Searchable multi-select; ALL = no restriction. provider_role ortho_visit: ortho_visits.visit_provider_id (prints as 'Visit Provider'). A narrower list keeps only appointments that HAVE an ortho visit by one of the chosen doctors, so rows missing the visit drop out (null_policy drop) [I]; the form shows a hint when visit_doctor_ids is not all and ortho_visit is ticked. Confirm on the live tool.",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "other",
+     "control_id": "",
+     "text": "Audit rule behind the report, with no criteria control for the population: every ortho patient with an appointment should have an Ortho Visit on the Ortho Treatment Card and a ledger entry. The two MISSING ticks carry the names of these two items; how the ticks select rows is inferred only."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  }
+ ]
+}

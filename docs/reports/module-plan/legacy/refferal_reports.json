@@ -1,0 +1,1181 @@
+{
+  "category": "refferal_reports",
+  "window_title": "Referral Reports",
+  "source_folder": "C:/Users/Sravan/Downloads/reports/refferal_reports",
+  "report_list": [
+    "Referral Production List",
+    "Referred Out List",
+    "Referral Source List",
+    "External Outgoing Referral Management",
+    "Referral Summary Report",
+    "Referral Count Summary",
+    "Internal Referral Management",
+    "External Incoming Referral Management"
+  ],
+  "reports": [
+    {
+      "name": "Referral Production List",
+      "screenshots": [
+        "1.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "No row label; two radios on one line."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "No row label; radios on the line above the office box."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only box on the row below the Office / Office Group radios; blue \"SELECT\" button (building icon) to its right. 108 matches the OID shown in the title bar."
+            }
+          ]
+        },
+        {
+          "title": "PROCEDURE DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Left half of the panel (side by side with FIRST VISIT DATE RANGE). Calendar icon inside the field at the right."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Left half of the panel. Calendar icon inside the field at the right."
+            }
+          ]
+        },
+        {
+          "title": "FIRST VISIT DATE RANGE ( LEAVE BLANK FOR ALL PATIENTS )",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Right half of the panel (side by side with PROCEDURE DATE RANGE). Field is empty and shows the placeholder text \"Select Date\"; calendar icon inside the field at the right. The instruction to leave blank for all patients is part of the section header text."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Right half of the panel. Field is empty and shows the placeholder text \"Select Date\"; calendar icon inside the field at the right."
+            }
+          ]
+        },
+        {
+          "title": "ZIP CODE RANGE",
+          "controls": [
+            {
+              "label": "From",
+              "type": "text_input",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Short empty text box, no placeholder; full-width section."
+            },
+            {
+              "label": "Through",
+              "type": "text_input",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Short empty text box, no placeholder."
+            }
+          ]
+        },
+        {
+          "title": "REFERRAL TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "No own label (section header acts as label). List collapsed - other values not visible."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Group By Zip Code",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Only control in this section."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "Shown only in 1.PNG (radio 'Referral Production List' filled, left column row 1). PROCEDURE DATE RANGE (left half) and FIRST VISIT DATE RANGE ( LEAVE BLANK FOR ALL PATIENTS ) (right half) are side by side; every other section is full width. Blank panel space is visible below OTHER OPTIONS, so the criteria are complete. No dropdown is expanded, so REFERRAL TYPE values other than ALL are unknown."
+    },
+    {
+      "name": "Referred Out List",
+      "screenshots": [
+        "2.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "No row label; two radios on one line."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "No row label; radios on the line above the office box."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only box below the Office / Office Group radios; blue \"SELECT\" button (building icon) to its right."
+            }
+          ]
+        },
+        {
+          "title": "REFERRED OUT DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field at the right. Full-width section."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field at the right."
+            }
+          ]
+        },
+        {
+          "title": "EXCLUDE PATIENT TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "None",
+              "enabled": true,
+              "notes": "Left half of the panel (side by side with REFERRAL OUT TO). Unlabelled read-only box showing \"None\"; blue \"SELECT\" button (person-plus icon) to its right."
+            }
+          ]
+        },
+        {
+          "title": "REFERRAL OUT TO",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half of the panel (side by side with EXCLUDE PATIENT TYPE). Unlabelled read-only box showing \"ALL\"; blue \"SELECT\" button (person-plus icon) to its right."
+            }
+          ]
+        },
+        {
+          "title": "SPECIALTY",
+          "controls": [
+            {
+              "label": "",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "No own label (section header acts as label). List collapsed - other values not visible."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "Shown only in 2.PNG (radio 'Referred Out List' filled, left column row 2). EXCLUDE PATIENT TYPE (left) and REFERRAL OUT TO (right) are side by side; other sections are full width. Large blank area below SPECIALTY, so the criteria are complete. No popup or expanded dropdown shown, so the patient-type list, the referral-out-to list and the specialty values are not visible."
+    },
+    {
+      "name": "Referral Source List",
+      "screenshots": [
+        "3.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "No row label; two radios on one line."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": false,
+              "notes": "Greyed out / disabled for this report: both radios and their labels are light grey; Office still shows as the selected (grey-filled) radio."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": false,
+              "notes": "Unlabelled read-only box still showing 108 (box and text look the same as on the other reports); the \"SELECT\" button (building icon) to its right is greyed out / disabled - its fill is grey instead of the blue used on every other report."
+            }
+          ]
+        },
+        {
+          "title": "REFERRED TO/BY",
+          "controls": [
+            {
+              "label": "",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Left half of the panel (side by side with REFERRAL TYPE). No own label. List collapsed - other values not visible."
+            }
+          ]
+        },
+        {
+          "title": "REFERRAL TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half of the panel (side by side with REFERRED TO/BY). No own label. List collapsed - other values not visible."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "Shown only in 3.PNG (radio 'Referral Source List' filled, left column row 3). This is the only report in the category where the OFFICE/GROUP controls are disabled (radios and SELECT button greyed; box keeps the value 108). No date range for this report. REFERRED TO/BY (left) and REFERRAL TYPE (right) are side by side. Large blank area below, so the criteria are complete."
+    },
+    {
+      "name": "External Outgoing Referral Management",
+      "screenshots": [
+        "4.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "No row label; two radios on one line."
+            }
+          ]
+        },
+        {
+          "title": "REFERRED FROM OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "No row label; radios on the line above the office box. Full-width section."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only box below the Office / Office Group radios; blue \"SELECT\" button (building icon) to its right."
+            }
+          ]
+        },
+        {
+          "title": "REFERRAL DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field at the right. Full-width section."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field at the right."
+            }
+          ]
+        },
+        {
+          "title": "REFERRED FROM PROVIDER",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Left half of the panel (side by side with REFERRED TO). Unlabelled read-only box showing \"ALL\"; blue \"SELECT\" button (single-person icon) to its right."
+            }
+          ]
+        },
+        {
+          "title": "REFERRED TO",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half of the panel (side by side with REFERRED FROM PROVIDER). Unlabelled read-only box showing \"ALL\"; blue \"SELECT\" button (person-plus icon) to its right."
+            }
+          ]
+        },
+        {
+          "title": "PROCEDURE CODES",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Left half of the panel (side by side with USERS). Unlabelled read-only box showing \"ALL\"; blue \"SELECT\" button with a building icon (the same glyph as on the office SELECT button, pixel-compared) to its right."
+            }
+          ]
+        },
+        {
+          "title": "USERS",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half of the panel (side by side with PROCEDURE CODES). Unlabelled read-only box showing \"ALL\"; blue \"SELECT\" button (person-plus icon) to its right."
+            }
+          ]
+        },
+        {
+          "title": "SPECIALTY",
+          "controls": [
+            {
+              "label": "",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "No own label (section header acts as label). Full-width section. List collapsed - other values not visible."
+            }
+          ]
+        },
+        {
+          "title": "STATUSES",
+          "controls": [
+            {
+              "label": "All",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Checkbox grid of 3 columns x 3 visible rows; this is row 1, column 1. Only checked box; the other status checkboxes are drawn enabled (not greyed) while All is checked."
+            },
+            {
+              "label": "Accepted",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Row 1, column 2."
+            },
+            {
+              "label": "Rejected",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Row 1, column 3."
+            },
+            {
+              "label": "Pending",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Row 2, column 1."
+            },
+            {
+              "label": "Cancelled",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Row 2, column 2."
+            },
+            {
+              "label": "Completed",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Row 2, column 3."
+            },
+            {
+              "label": "In Progress",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Row 3, column 1. Last visible row - it ends flush against the bottom action bar."
+            },
+            {
+              "label": "Not Needed",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Row 3, column 2."
+            },
+            {
+              "label": "Expired",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Row 3, column 3."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": true,
+      "notes": "Shown only in 4.PNG (radio 'External Outgoing Referral Management' filled, left column row 4). Side-by-side pairs: REFERRED FROM PROVIDER | REFERRED TO, and PROCEDURE CODES | USERS; other sections full width. POSSIBLY TRUNCATED: the third row of the STATUSES checkbox grid (In Progress / Not Needed / Expired) ends flush against the fixed bottom action bar (pixel scan: the row fills y=519-538 and the bar starts at y=539). Rows 1 and 2 are each closed by a 2 px separator line, row 3 is not, and no blank panel background is visible beneath it - every complete report in this category shows blank panel background above the bar, and 7.PNG proves the bar hides content beneath it. More rows or sections may therefore exist below (for comparison, the sibling External Incoming report shows an 'Exclude Deleted Referrals' checkbox as a 4th STATUSES row), but nothing further is visible here and nothing was assumed. No scrollbar is drawn. A scrolled capture is needed to confirm the end of this report. Statuses are listed row by row (left to right); grid position is in each control's notes. Nothing is greyed out."
+    },
+    {
+      "name": "Referral Summary Report",
+      "screenshots": [
+        "5.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "No row label; two radios on one line."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "No row label; radios on the line above the office box."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only box below the Office / Office Group radios; blue \"SELECT\" button (building icon) to its right."
+            }
+          ]
+        },
+        {
+          "title": "PROCEDURE DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Full-width section (label column is wider here than in the other reports). Calendar icon inside the field at the right."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field at the right."
+            }
+          ]
+        },
+        {
+          "title": "REFERRAL TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "No own label (section header acts as label). List collapsed - other values not visible."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "Shown only in 5.PNG (radio 'Referral Summary Report' filled, right column row 1). All sections full width. Criteria are identical to Referral Count Summary (6.PNG). Large blank area below REFERRAL TYPE, so the criteria are complete."
+    },
+    {
+      "name": "Referral Count Summary",
+      "screenshots": [
+        "6.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "No row label; two radios on one line."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "No row label; radios on the line above the office box."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only box below the Office / Office Group radios; blue \"SELECT\" button (building icon) to its right."
+            }
+          ]
+        },
+        {
+          "title": "PROCEDURE DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Full-width section (label column is wider here than in the other reports). Calendar icon inside the field at the right."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field at the right."
+            }
+          ]
+        },
+        {
+          "title": "REFERRAL TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "No own label (section header acts as label). List collapsed - other values not visible."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "Shown only in 6.PNG (radio 'Referral Count Summary' filled, right column row 2). All sections full width. Criteria are identical to Referral Summary Report (5.PNG). Large blank area below REFERRAL TYPE, so the criteria are complete."
+    },
+    {
+      "name": "Internal Referral Management",
+      "screenshots": [
+        "7.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "No row label; two radios on one line."
+            }
+          ]
+        },
+        {
+          "title": "REFERRED FROM OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left half of the panel (side by side with REFERRED TO OFFICE/GROUP). No row label."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Left half. Unlabelled read-only box below the radios showing 108; blue \"SELECT\" button (building icon) to its right."
+            }
+          ]
+        },
+        {
+          "title": "REFERRED TO OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Right half of the panel (side by side with REFERRED FROM OFFICE/GROUP). No row label."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half. Unlabelled read-only box below the radios showing \"ALL\"; blue \"SELECT\" button (building icon) to its right."
+            }
+          ]
+        },
+        {
+          "title": "REFERRAL DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field at the right. Full-width section."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field at the right."
+            }
+          ]
+        },
+        {
+          "title": "REFERRED FROM PROVIDER",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Left half of the panel (side by side with REFFERED TO PROVIDER). Unlabelled read-only box showing \"ALL\"; blue \"SELECT\" button (single-person icon) to its right."
+            }
+          ]
+        },
+        {
+          "title": "REFFERED TO PROVIDER",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half of the panel (side by side with REFERRED FROM PROVIDER). Header is misspelt in the legacy UI exactly as transcribed (REFFERED - the glyph bitmap reads R-E-F-F-E-R-E-D, whereas the left neighbour and 8.PNG read R-E-F-E-R-R-E-D). Unlabelled read-only box showing \"ALL\"; blue \"SELECT\" button (single-person icon) to its right."
+            }
+          ]
+        },
+        {
+          "title": "PROCEDURE CODES",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Left half of the panel (side by side with USERS). Unlabelled read-only box showing \"ALL\"; blue \"SELECT\" button with a building icon (the same glyph as on the office SELECT button, pixel-compared) to its right."
+            }
+          ]
+        },
+        {
+          "title": "USERS",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half of the panel (side by side with PROCEDURE CODES). Unlabelled read-only box showing \"ALL\"; blue \"SELECT\" button (person-plus icon) to its right."
+            }
+          ]
+        },
+        {
+          "title": "SPECIALTY",
+          "controls": [
+            {
+              "label": "",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "No own label (section header acts as label). Full-width section. List collapsed - other values not visible."
+            }
+          ]
+        },
+        {
+          "title": "STATUSES",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "All",
+                "Completed",
+                "Incomplete"
+              ],
+              "default_value": "All",
+              "enabled": true,
+              "notes": "No row label; three radios on one line (first row of the section). Unlike the two External reports, statuses here are radios, not checkboxes."
+            },
+            {
+              "label": "Exclude Deleted Referrals",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Second row of the STATUSES section, below the radios."
+            }
+          ]
+        },
+        {
+          "title": "GROUP BY",
+          "controls": []
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": true,
+      "notes": "Shown only in 7.PNG (radio 'Internal Referral Management' filled, right column row 3). Side-by-side pairs: REFERRED FROM OFFICE/GROUP | REFERRED TO OFFICE/GROUP, REFERRED FROM PROVIDER | REFFERED TO PROVIDER, PROCEDURE CODES | USERS; other sections full width. TRUNCATED: the last thing visible is the grey section header 'GROUP BY' - only the top 15 px of the header bar with its text (pixel scan: header starts at y=521, the fixed bottom action bar, which has the same fill colour, covers everything from y=536). NONE of the GROUP BY controls are visible and anything below it is unknown, so the GROUP BY section is listed with no controls. A scrolled screenshot is needed to capture them. No scrollbar is drawn. The header 'REFFERED TO PROVIDER' is a genuine legacy typo, kept as displayed. Nothing is greyed out."
+    },
+    {
+      "name": "External Incoming Referral Management",
+      "screenshots": [
+        "8.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "No row label; two radios on one line."
+            }
+          ]
+        },
+        {
+          "title": "REFERRED TO OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "No row label; radios on the line above the office box. Full-width section."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only box below the Office / Office Group radios; blue \"SELECT\" button (building icon) to its right."
+            }
+          ]
+        },
+        {
+          "title": "REFERRAL DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field at the right. Full-width section."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field at the right."
+            }
+          ]
+        },
+        {
+          "title": "REFERRED TO PROVIDER",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Left half of the panel (side by side with REFERRED FROM). Unlabelled read-only box showing \"ALL\"; blue \"SELECT\" button (single-person icon) to its right. Spelt correctly here (REFERRED), unlike in Internal Referral Management."
+            }
+          ]
+        },
+        {
+          "title": "REFERRED FROM",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half of the panel (side by side with REFERRED TO PROVIDER). Unlabelled read-only box showing \"ALL\"; blue \"SELECT\" button (person-plus icon) to its right."
+            }
+          ]
+        },
+        {
+          "title": "STATUSES",
+          "controls": [
+            {
+              "label": "All",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Checkbox grid of 3 columns x 3 rows plus a 4th full-width row; this is row 1, column 1."
+            },
+            {
+              "label": "Accepted",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Row 1, column 2."
+            },
+            {
+              "label": "Rejected",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Row 1, column 3."
+            },
+            {
+              "label": "Pending",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Row 2, column 1."
+            },
+            {
+              "label": "Cancelled",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Row 2, column 2."
+            },
+            {
+              "label": "Completed",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Row 2, column 3."
+            },
+            {
+              "label": "In Progress",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Row 3, column 1."
+            },
+            {
+              "label": "Not Needed",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Row 3, column 2."
+            },
+            {
+              "label": "Expired",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Row 3, column 3."
+            },
+            {
+              "label": "Exclude Deleted Referrals",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Row 4 of the STATUSES section, a single full-width row below the status grid (not a status value itself)."
+            }
+          ]
+        },
+        {
+          "title": "CONTACT STATUSES",
+          "controls": [
+            {
+              "label": "All",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Checkbox grid of 3 columns x 2 rows; this is row 1, column 1. Only checked box in this section."
+            },
+            {
+              "label": "No Response",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Row 1, column 2."
+            },
+            {
+              "label": "Patient To Call",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Row 1, column 3."
+            },
+            {
+              "label": "Appointment Scheduled",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Row 2, column 1."
+            },
+            {
+              "label": "Referral Refused",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Row 2, column 2. Row 2, column 3 is an empty cell."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "Shown only in 8.PNG (radio 'External Incoming Referral Management' filled, right column row 4). REFERRED TO PROVIDER (left) and REFERRED FROM (right) are side by side; other sections full width. Unlike External Outgoing / Internal, no PROCEDURE CODES, USERS or SPECIALTY sections are visible for this report, and no GROUP BY. A 16 px strip of blank panel background (y=519-534) is visible between the last CONTACT STATUSES row and the action bar - the same background that fills the empty area of the short reports - so the criteria end there and the report is treated as complete, though the margin is small. Checkboxes are listed row by row (left to right); grid position is in each control's notes. Nothing is greyed out; the individual status checkboxes are drawn enabled while All is checked."
+    }
+  ],
+  "reports_without_screenshot": [],
+  "observations": "All 8 screenshots (1366 px wide, 582-589 px high) are plain, unscrolled views of the same Denticon screen, each with a different report selected (1.PNG..8.PNG = the 8 listed reports in list order), so every report has exactly one screenshot and none is missing. Title bar: 'Referral Reports' at the left; 'PGID :2829 / OID :108' followed by a printer icon at the far right. Left panel header 'SELECT REPORT' lists the 8 reports as radio buttons in a 2-column x 4-row grid; the list is fully visible (uniform empty dark area below it, no scrollbar, nothing clipped). A small splitter/collapse handle (three dots) sits on the divider between the two panels. Right panel header 'REPORT CRITERIA' carries a grey 'CLEAR CRITERIA' button (refresh icon) at its right end; a fixed action bar at the bottom of the criteria panel holds the blue buttons 'PRINT / PREVIEW' (printer icon) and 'ADD TO MY FAVORITES' (plus icon). No footer text. No dropdown is expanded and no picker popup is open in any screenshot, so the value lists behind REFERRAL TYPE, SPECIALTY, REFERRED TO/BY and behind every SELECT picker (offices, office groups, providers, referred-to / referred-from / referral-out-to sources, users, procedure codes, patient types) are not visible anywhere in this category and must be captured separately. Recurring patterns: every report starts with PRINT FORMAT (PDF / Excel, PDF selected). Office scope is an Office / Office Group radio pair (Office selected) plus an unlabelled read-only box with a blue SELECT button; the box defaults to 108 (the OID in the title bar). The section is titled OFFICE/GROUP, REFERRED FROM OFFICE/GROUP or REFERRED TO OFFICE/GROUP depending on the report, and Internal Referral Management shows both From (108) and To (ALL) side by side. Referral Source List is the only report where the office radios and SELECT button are greyed out. Date sections are titled PROCEDURE DATE RANGE (Referral Production List, Referral Summary Report, Referral Count Summary), REFERRED OUT DATE RANGE (Referred Out List) or REFERRAL DATE RANGE (the three Management reports); Referral Source List has no date range. Populated date fields show 11/21/2026 (apparently the capture date) with a calendar icon inside the field; the FIRST VISIT DATE RANGE fields are empty with a grey 'Select Date' placeholder. Multi-select filters are unlabelled read-only boxes (default ALL, or None for EXCLUDE PATIENT TYPE) with a blue SELECT button whose icon varies: building = office/office group and PROCEDURE CODES, single person = provider pickers, person-plus = USERS / REFERRED TO / REFERRED FROM / REFERRAL OUT TO / EXCLUDE PATIENT TYPE. Pickers, dropdowns and the radio rows have no field label of their own (label left empty; the section header serves as the label). Referral Summary Report and Referral Count Summary show identical criteria. Status vocabularies: External Outgoing and External Incoming use a 3-column checkbox grid (All, Accepted, Rejected, Pending, Cancelled, Completed, In Progress, Not Needed, Expired; only All checked); Internal uses radios (All, Completed, Incomplete; All selected); External Incoming adds CONTACT STATUSES (All, No Response, Patient To Call, Appointment Scheduled, Referral Refused; only All checked); 'Exclude Deleted Referrals' (checked) is visible on Internal and External Incoming. Text fidelity: at this resolution the bold upper-case section-header font draws capital G almost like C (the headers look like 'OFFICE/CROUP', 'DATE RANCE', 'CROUP BY'). A pixel-level comparison of the two glyphs inside the same header (the C of CODE vs the G of RANGE in ZIP CODE RANGE; the C of OFFICE vs the G of GROUP) shows the G carries a heavier lower-right spur that the C lacks, and the regular-weight radio label 'Office Group' shows a clear G, so these headers are transcribed as GROUP / RANGE / GROUP BY. Genuine legacy typo kept as displayed: 'REFFERED TO PROVIDER' (Internal Referral Management, 7.PNG); the same wording is spelt correctly as 'REFERRED TO PROVIDER' on External Incoming (8.PNG). The header 'FIRST VISIT DATE RANGE ( LEAVE BLANK FOR ALL PATIENTS )' is displayed with spaces inside the parentheses. Truncation: the criteria content runs underneath the fixed action bar and no scrollbar is drawn anywhere. In 7.PNG (Internal Referral Management) only the top 15 px of the GROUP BY header (with its text) is visible - its controls are hidden. In 4.PNG (External Outgoing Referral Management) the third STATUSES row ends flush against the bar with no closing separator line or blank panel background, so further rows/sections may be hidden. A scrolled capture of both reports is needed to complete them. The other six reports end with blank panel background above the action bar (only 16 px of it in 8.PNG) and are complete. A sweep of every ink cluster in each criteria panel found no further controls: no right-edge checkboxes such as Page Break, no icons beside fields other than the calendar icons, and no instruction text other than the FIRST VISIT header."
+}

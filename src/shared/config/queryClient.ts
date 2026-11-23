@@ -38,8 +38,11 @@ export const queryClient = new QueryClient({
     },
   },
   queryCache: new QueryCache({
-    onError: (error) => {
+    onError: (error, query) => {
       if (isUnauthorized(error)) return;
+      // `meta: { silent_error: true }`: the screen renders the error itself (e.g. the
+      // Reports engine probe, where a 404 is an answer, not a failure).
+      if (query.meta?.silent_error) return;
       toast.error(getErrorMessage(error));
     },
   }),

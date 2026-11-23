@@ -1,0 +1,212 @@
+{
+ "category": "setup_list_reports",
+ "reports": {
+  "setup_list_reports.r01": {
+   "report_key": "lists.employer_list",
+   "phase": "P3"
+  },
+  "setup_list_reports.r02": {
+   "report_key": "lists.insurance_plan_list",
+   "phase": "P3"
+  },
+  "setup_list_reports.r03": {
+   "report_key": "lists.carrier_list",
+   "phase": "P3"
+  },
+  "setup_list_reports.r04": {
+   "report_key": "lists.inactive_plans_list",
+   "phase": "P3"
+  },
+  "setup_list_reports.r05": {
+   "report_key": "lists.drug_list",
+   "phase": "P3"
+  },
+  "setup_list_reports.r06": {
+   "report_key": "lists.procedure_codes_list",
+   "phase": "P3"
+  },
+  "setup_list_reports.r07": {
+   "report_key": "lists.explosion_codes_list",
+   "phase": "P3"
+  },
+  "setup_list_reports.r08": {
+   "report_key": "lists.procedure_codes_by_fee_schedule",
+   "phase": "P3",
+   "dynamic_rules": {
+    "setup_list_reports.r08.d01": "fee_schedule_effective_date (entity_single) has options_source lookup:fee_schedule_effective_dates (04 13.3, FLT-09) with depends_on [fee_schedule_id]: the list holds the distinct fee_schedule_entries.effective_date values for the chosen schedule. When fee_schedule_id changes the form reloads the list and resets the value to its default (candidate first_option, unconfirmed); a value that is not a version of the chosen schedule is 422 invalid_parameter. Both parameters are required. The run prices every listed code with the entry of that schedule in force on the chosen date (effective_date <= :fee_schedule_effective_date < coalesce(effective_to, infinity)). The hidden office_scope (default all) is a no-op until RPT-STLIST-20: fee_schedules.office_id is deprecated and NULL, so every readable schedule is offered."
+   }
+  },
+  "setup_list_reports.r09": {
+   "report_key": "lists.credit_codes_report",
+   "phase": "P3"
+  },
+  "setup_list_reports.r10": {
+   "report_key": "lists.fee_schedule_list",
+   "phase": "P3"
+  },
+  "setup_list_reports.r11": {
+   "report_key": "lists.capitation_fee_schedule",
+   "phase": "P3"
+  },
+  "setup_list_reports.r12": {
+   "report_key": "lists.office_list",
+   "phase": "P3",
+   "dynamic_rules": {
+    "setup_list_reports.r12.d01": "office_scope: the radio value office_scope.mode = office_group switches the picker to lookup:office_groups and the selection fills office_group_id (one group) or office_group_ids (several, enhancement); mode office fills office_ids (default working_office). A group resolves to its member offices (offices.office_group_id) intersected with the offices the caller may read. When the tenant has no office groups (every migrated tenant: office_groups is empty) the group mode offers the single value all, which resolves to every office the caller may read - the legacy 'group run covers all offices'. Recorded once here; the same behaviour holds on lists.office_holidays and lists.operatory_list."
+   }
+  },
+  "setup_list_reports.r13": {
+   "report_key": "lists.office_holidays",
+   "phase": "P3"
+  },
+  "setup_list_reports.r14": {
+   "report_key": "lists.operatory_list",
+   "phase": "P3"
+  },
+  "setup_list_reports.r15": {
+   "report_key": "lists.ada_categories_list",
+   "phase": "P3"
+  },
+  "setup_list_reports.r16": {
+   "report_key": "lists.default_ins_plan_coverage_category_list",
+   "phase": "P3"
+  },
+  "setup_list_reports.r17": {
+   "report_key": "lists.document_types_list",
+   "phase": "P3"
+  },
+  "setup_list_reports.r18": {
+   "report_key": "lists.notes_macro_category_list",
+   "phase": "P3"
+  },
+  "setup_list_reports.r19": {
+   "report_key": "lists.notes_macros_list",
+   "phase": "P3"
+  },
+  "setup_list_reports.r20": {
+   "report_key": "lists.patient_types_list",
+   "phase": "P3"
+  }
+ },
+ "controls": {
+  "setup_list_reports.r01.s02.c01": {
+   "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL) becomes a searchable multi-select; ALL = no restriction; dialog content never captured - confirm whether the list shows every employer. Role on this report: the listed employer itself (employers.id IN (:employer_ids)), not the employer of a plan. Option source lookup:employers. employers is hard-deleted, so no inactive rows exist."
+  },
+  "setup_list_reports.r01.s03.c01": {
+   "notes": "Lookup-fed dropdown captured collapsed (only ALL known; value list never captured). Options from lookup:definitions:state. Filters employers.state (address state, free text) normalised to the USPS code through rpt_value_map domain state (03 3.7). ALL keeps employers without a state; a selected state drops them (null_policy drop). Legacy is single-select; a list is the enhancement. Which state the legacy list offers (all states or only states present in employer rows) is INFERRED - confirm on the live tool."
+  },
+  "setup_list_reports.r02.s02.c01": {
+   "notes": "Sort and probably outer grouping key (INFERRED, research 8 Insurance Plan List): carrier = carrier name, then employer name, group number, plan id; employer = employer name, then carrier name, group number, plan id. Whether the legacy print also bands by the chosen key must be confirmed on the live tool."
+  },
+  "setup_list_reports.r02.s03.c01": {
+   "notes": "Member created_date of date_basis_set (enum_multi, min_items 0, full_selection predicate; 04 2.5). Ticked: date_from / date_to apply to the plan's created date = office-local date of insurance_plans.created_at for app rows, the legacy created_on value for migrated rows (created_at holds the migration time; 04 3.10). Both members ticked = created OR modified in the range; none ticked = no date restriction (both readings INFERRED, 04 11.5 - confirm on the live tool)."
+  },
+  "setup_list_reports.r02.s03.c02": {
+   "notes": "Member modified_date of date_basis_set (legacy default ticked). Ticked: the range applies to the plan's last-modified date = office-local date of insurance_plans.updated_at when updated_by IS NOT NULL (edited in DentC), else the legacy modified_on, else the created date (updated_at holds the migration time on every unedited migrated plan, TimestampMixin). Both ticked = created OR modified in the range; none ticked = no date restriction (INFERRED, 04 11.5). Open question: with this default the legacy-default run lists only plans modified today, unless the greyed Start / End boxes mean the range is not applied (see r02.s03.c03)."
+  },
+  "setup_list_reports.r02.s03.c03": {
+   "enabled_when": "unknown - enabled in every state until the legacy driver is read on the live tool (04 9.3 #51: captured grey while Modified On was ticked, so the checkbox pair is not the driver)",
+   "notes": "Primary date range start (date_range = date_from, date_to, date_preset); basis chosen by date_basis_set (04 2.4). Default today in the office time zone (relative token); enhanced with presets. Captured GREY although Modified On is ticked: the legacy driver is unknown (04 9.3 #51) - it may be a read-only box filled through the calendar icon, or a range that is ignored in this state. Confirm on the live tool whether a default run (Modified On, today..today) filters at all."
+  },
+  "setup_list_reports.r02.s03.c04": {
+   "enabled_when": "unknown - enabled in every state until the legacy driver is read on the live tool (04 9.3 #52, same as Start Date)",
+   "notes": "Primary date range, inclusive end, office-local. Default today (relative token); enhanced with presets. Captured GREY although Modified On is ticked (04 9.3 #52): confirm the driver and whether the range applies by default on the live tool."
+  },
+  "setup_list_reports.r02.s04.c01": {
+   "notes": "Legacy SELECT dialog becomes a searchable multi-select; ALL = no restriction. Role on this report: the employer of the plan (insurance_plans.employer_id IN (:employer_ids)); plans without an employer are kept under ALL and dropped by a selection. Option source lookup:employers. Part of the plan identity group number + employer + carrier (vendor-doc correction)."
+  },
+  "setup_list_reports.r02.s05.c01": {
+   "notes": "Gate of user_ids (04 2.4, 9.6 #7): ticked = the USER picker is part of the filter; unticked = user_ids is replaced by its disabled_value all (no user predicate). Legacy default ticked with USER = ALL, so the default run has no user restriction either way."
+  },
+  "setup_list_reports.r02.s05.c02": {
+   "notes": "Legacy SELECT dialog becomes a searchable multi-select; ALL = no restriction. User role on this report (INFERRED, research 8): plan_audit_user (NEW role value, owner 03 5.4) = the user who created the plan when only created_date is in date_basis_set, who last modified it when only modified_date is, either of the two when both or neither are ticked. Columns: modifier = updated_by (FK users.id), else the legacy modified_by string; creator = the legacy created_by string on migrated plans; app-created plans carry no creator stamp (created_by is a text column that CRUDBase.create does not fill), so the creator role matches app plans only after NEW insurance_plans.created_by_user_id (03, RPT-STLIST-41) lands - availability app_plan_creator_missing until then. Legacy strings match only under ALL (04 3.10). Open: whether unticking Include User in Filters disables the picker or only drops its predicate (supplement unresolved r02). Data class of the parameter: user_activity (08 5.2 rule 12, user on a row about a change)."
+  },
+  "setup_list_reports.r02.s06.c01": {
+   "notes": "Legacy SELECT dialog becomes a searchable multi-select; ALL = no restriction. Role on this report: the carrier of the plan (insurance_plans.carrier_id IN (:carrier_ids)). Option source lookup:carriers, active and inactive carriers. Dialog content never captured - confirm whether inactive carriers are listed."
+  },
+  "setup_list_reports.r02.s07.c01": {
+   "notes": "Free-text GROUP # box, default empty = no restriction. Match rule not documented: exact or partial. DentC binds it as a case-insensitive contains match on insurance_plans.group_number (INFERRED; the existing API filter group_number_contains takes about 20 s on 31k plans, so the dataset needs a trigram index - RPT-STLIST-03). Confirm exact versus partial match on the live tool. text values are never written to the URL (04 12)."
+  },
+  "setup_list_reports.r03.s02.c01": {
+   "notes": "Legacy SELECT dialog becomes a searchable multi-select; ALL = no restriction. Role on this report: the listed carrier itself (insurance_carriers.id IN (:carrier_ids)), not the carrier of a plan or claim. Option source lookup:carriers, active and inactive. Dialog content never captured - confirm whether inactive carriers are listed and printed."
+  },
+  "setup_list_reports.r03.s03.c01": {
+   "notes": "Lookup-fed dropdown captured collapsed (only ALL known). Options from lookup:definitions:state. Filters insurance_carriers.state (main address of the carrier record) normalised to the USPS code (rpt_value_map domain state, 03 3.7). Legacy: one carrier can have several claim-submission addresses - which address state the legacy filter reads is INFERRED (main address assumed); confirm on the live tool. ALL keeps carriers without a state. Legacy single-select; a list is the enhancement."
+  },
+  "setup_list_reports.r04.s02.c01": {
+   "notes": "Legacy SELECT dialog becomes a searchable multi-select; ALL = no restriction. Role: the carrier of the unused plan (insurance_plans.carrier_id). Population rule without a control (vendor-doc correction): Inactive = plans attached to no patient record (no live patient_insurance row: NOT EXISTS patient_insurance WHERE ins_plan_id = plan AND is_active - INFERRED, the rule of GET /insurance-plans/{id}/usage; enhancement count_inactive_links_as_used = true is the strict any-record reading; insurance_subscribers references not counted, to confirm), not insurance_plans.is_active = false. Option source lookup:carriers."
+  },
+  "setup_list_reports.r05.s02.c01": {
+   "notes": "Legacy SELECT dialog becomes a searchable multi-select; ALL = no restriction. User relation is NOT documented (research open question 6, supplement unresolved r05): DentC binds the role library_entry_user (NEW role value, owner 03 5.4) = prescription_library.created_by or updated_by IN (:user_ids) (INFERRED). created_by / updated_by are NULL on every migrated drug, so migrated rows match only under ALL. Confirm on the live tool whether USER means created-by, modified-by or user-specific drugs."
+  },
+  "setup_list_reports.r06.s02.c01": {
+   "notes": "Lookup-fed dropdown captured collapsed (only ALL known). Codes of one ADA category (vendor-doc correction): rpt_procedure_code_dim.code_category IN (:procedure_category_codes) (12 ADA labels plus Medical, Account). Option source lookup:procedure_categories (GET /procedure-code-categories). ALL = every category, codes without a category kept. Legacy single-select; a list is the enhancement. Confirm the value list on the live tool."
+  },
+  "setup_list_reports.r06.s03.c01": {
+   "notes": "Lookup-fed dropdown captured collapsed (only ALL known). Codes of one scheduler production type (vendor-doc correction): rpt_procedure_code_dim.production_type_id IN (:production_type_ids). The column is NEW (DATA-04) and NULL until filled in setup, so a selected type returns no code until the office maps its codes; ALL keeps every code. Option source lookup:production_types. Legacy single-select; a list is the enhancement. Code settings are per tenant: bound through the tenant-scoped rpt_procedure_code_dim over NEW tenant_procedure_codes (03, DATA-04 extension, RPT-STLIST-05), because procedure_codes is global (no tenant_id)."
+  },
+  "setup_list_reports.r06.s04.c01": {
+   "notes": "Status of the procedure code: rpt_procedure_code_dim.is_active. Legacy default Active (screenshot). coverage_matrix.md row 99 names 'Both statuses' as the default basis; that contradicts the captured default and is not followed - correction of coverage_matrix.md row 99 to 'STATUS = Active' requested through RPT-STLIST-14. Code settings are per tenant: bound through the tenant-scoped rpt_procedure_code_dim over NEW tenant_procedure_codes (03, DATA-04 extension, RPT-STLIST-05), because procedure_codes is global (no tenant_id)."
+  },
+  "setup_list_reports.r06.s05.c03": {
+   "notes": "Only codes set up to be billed to insurance: rpt_procedure_code_dim.bill_to_insurance = true. The column is NEW (DATA-04) and NULL until filled in setup; with the box ticked a NULL code is dropped, so the ticked run is empty until setup is completed (availability warning). Unticked default adds no predicate. Code settings are per tenant: bound through the tenant-scoped rpt_procedure_code_dim over NEW tenant_procedure_codes (03, DATA-04 extension, RPT-STLIST-05), because procedure_codes is global (no tenant_id)."
+  },
+  "setup_list_reports.r07.s02.c01": {
+   "notes": "SUMMARY/DETAIL is report_format spelled differently (04 8, sig0311). summary = one row per explosion code (sample 2022: Exp. Code Short Descr, Exp. Code Descr, Default Same Tooth); detail = plus the member procedure codes in stored order (INFERRED). Printed title carries the choice: Explosion Codes List (Summary) / (Detail) via title_templates."
+  },
+  "setup_list_reports.r08.s02.c01": {
+   "notes": "Member dental of procedure_code_types (enum_multi, min_items 1, full_selection no_predicate; 04 2.5): rpt_procedure_code_dim.code_type IN (...). code_type is NEW (DATA-04) and filled by the default rule until reviewed; with all three ticked (legacy default) no predicate, so codes without a type are kept."
+  },
+  "setup_list_reports.r08.s02.c02": {
+   "notes": "Member medical of procedure_code_types; code_type = medical (DATA-04 default rule: category Medical). Full selection = no predicate."
+  },
+  "setup_list_reports.r08.s02.c03": {
+   "notes": "Member other of procedure_code_types; code_type = other (every code that is neither CDT dental nor medical, for example Account codes). Full selection = no predicate."
+  },
+  "setup_list_reports.r08.s03.c01": {
+   "notes": "As on Procedure Codes List: rpt_procedure_code_dim.code_category IN (...), lookup:procedure_categories, ALL keeps every code. Legacy single-select; a list is the enhancement."
+  },
+  "setup_list_reports.r08.s04.c01": {
+   "notes": "As on Procedure Codes List: rpt_procedure_code_dim.production_type_id (NEW, DATA-04, NULL until filled). ALL keeps every code. Legacy single-select; a list is the enhancement. Code settings are per tenant: bound through the tenant-scoped rpt_procedure_code_dim over NEW tenant_procedure_codes (03, DATA-04 extension, RPT-STLIST-05), because procedure_codes is global (no tenant_id)."
+  },
+  "setup_list_reports.r08.s05.c01": {
+   "notes": "Subject of the report, not a filter: the ONE fee schedule whose fees are printed (fee_schedule_id, entity_single, required, never all; 04 2.4 shared-signature override of sig0315). Option source lookup:fee_schedules (every readable schedule; the hidden office_scope is a no-op until RPT-STLIST-20, because fee_schedules.office_id is deprecated and NULL on every row). The captured default is a tenant row, not a rule: candidate first_option, unconfirmed. Check on the live tool: (1) which schedule is preselected for a new session (first alphabetically, the office default UCR schedule, or the last used), (2) whether the list offers ALL. Shared parameter compare: office_default_ucr_fee_schedule token exists (04 2.3) if the live tool shows the office UCR schedule."
+  },
+  "setup_list_reports.r08.s06.c01": {
+   "notes": "One effective-dated version of the chosen schedule (vendor-doc correction; feature since 2020). entity_single, required, depends_on fee_schedule_id, options_source lookup:fee_schedule_effective_dates (04 13.3, FLT-09) = distinct fee_schedule_entries.effective_date of the schedule. Captured default 01/01/2020 is tenant data; candidate first_option. Check on the live tool: list order and whether the default is the earliest, the latest, or the version in force today. The version list is the entry dates: the fee in force is decided by fee_schedule_entries.effective_date and a new effective date is a dated bulk upsert into the same schedule (codes.py FeeSchedule, FEE-4); schedule rows with parent_schedule_id are separate schedules of the FEE SCHEDULE list, not versions."
+  },
+  "setup_list_reports.r08.s08.c03": {
+   "notes": "As on Procedure Codes List: rpt_procedure_code_dim.bill_to_insurance = true (NEW, DATA-04, NULL until filled; ticked run empty until setup is completed). Code settings are per tenant: bound through the tenant-scoped rpt_procedure_code_dim over NEW tenant_procedure_codes (03, DATA-04 extension, RPT-STLIST-05), because procedure_codes is global (no tenant_id)."
+  },
+  "setup_list_reports.r09.s02.c01": {
+   "notes": "Static dropdown captured collapsed: only the default ALL is known, so no option can be mapped yet. Binds rpt_transaction_code_dim.code_kind (03 3.3). Expected list (vendor documentation of the code record field Type, not of the dropdown): ALL / Payment / Adjustment -> all / payment / adjustment. Check on the live tool: expand TYPE and record every entry and its order."
+  },
+  "setup_list_reports.r09.s03.c01": {
+   "notes": "Static dropdown captured collapsed: only the default ALL is known. Binds rpt_transaction_code_dim.legacy_class (03 3.3 literal vocabulary: payments None, Insurance Payment, Capitation Payment, Insurance Prev. Bal, Collection Agency Payment; adjustments None, Write-Off, Finance Charge, Contract Down Payment, Balance Moved to Contract, Periodic Contract billing, Late Charge, Capitation Adjustment, Sales Tax, Insurance Adjustment, Move Patient (Debit) / (Credit), Previous Balance (Debit) / (Credit), Credit Card Refund, Treatment plan discount, Collection Agency Adjustment). Check on the live tool: the exact entries, and whether the CLASS list is narrowed by TYPE (candidate rule: options enabled_when credit_code_type in [all, <kind of the class>])."
+  },
+  "setup_list_reports.r10.s02.c01": {
+   "notes": "Lookup-fed dropdown captured collapsed: ALL plus the tenant's schedules, each shown as '<name> [ED: m/d/yyyy]' (vendor-doc correction); ED = coalesce(fee_schedules.effective_date, max(fee_schedule_entries.effective_date) of the schedule), the same expression as the effective_date column. List filter (fee_schedule_ids, entity_multi, default all): fee_schedules.id IN (...). Option source lookup:fee_schedules (every readable schedule; the hidden office_scope is a no-op until RPT-STLIST-20: fee_schedules.office_id is deprecated and NULL, office binding lives in fee_schedule_assignments and the offices' default / UCR pointers). Legacy single-select; a list is the enhancement. On Procedure Codes by Fee Schedule the same signature is the subject fee_schedule_id (override there). What the report prints for one schedule (catalogue row or its fees) is undocumented (research open question 5)."
+  },
+  "setup_list_reports.r11.s02.c01": {
+   "notes": "Lookup-fed dropdown captured collapsed: ALL plus managed-care schedules shown with their ED suffix (vendor-doc correction: capitation, dental HMO, HMO and Medicaid schedules). fee_schedule_ids restricted to fee_schedules.pricing_model = copay in both the option source and the rows; ALL = every copay schedule the caller may read (the hidden office_scope is a no-op until RPT-STLIST-20). Legacy single-select; a list is the enhancement. Confirm on the live tool that the list holds exactly the managed-care schedules."
+  },
+  "setup_list_reports.r12.s02.c02": {
+   "notes": "108 = id of the office the user was working in (vendor-doc correction: the box defaults to the session office, SELECT picks others). Offices (mode office) or office groups (mode office_group); the selection becomes exactly one of office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read. On this report the office is the listed office itself: office_attribution = listed_office (NEW value, owner 03 5.1) = rpt_office_dim.office_id IN (resolved set). Inactive and deleted offices: rpt_office_dim keeps them; whether the legacy list prints them is unknown (family open question)."
+  },
+  "setup_list_reports.r13.s02.c02": {
+   "notes": "108 = id of the office the user was working in (vendor-doc correction). Same value rules as Office List. Office attribution = holiday_office (NEW value, owner 03 5.1): account_holidays rows whose office_id is in the resolved set, plus the tenant-wide rows (office_id NULL), printed under every selected office with a Scope column 'Account' (INFERRED: the legacy screen sets enterprise holidays under Setup > Account and whether this report includes them is unknown - supplement unresolved r13). An office row beats the account row for the same date (DentC rule)."
+  },
+  "setup_list_reports.r13.s03.c01": {
+   "notes": "Primary date range start; fixed basis holiday_date (04 7.2 #36). Row test (INFERRED, supplement unresolved r13): a one-time holiday whose holiday_date lies in the range; a recurring holiday (is_recurring) contributes its yearly occurrences that fall in the range. Default today in the office time zone (relative token, captured 11/21/2026 = capture date); enhanced with presets."
+  },
+  "setup_list_reports.r13.s03.c02": {
+   "notes": "Primary date range, inclusive end; fixed basis holiday_date; same intersection rule (INFERRED). Default today (relative token); enhanced with presets."
+  },
+  "setup_list_reports.r14.s02.c02": {
+   "notes": "108 = id of the office the user was working in (vendor-doc correction). Same value rules as Office List. Office attribution = operatory_office (NEW value, owner 03 5.1, same value as lists.provider_operatory): operatories.office_id IN (resolved set). operatories has no tenant_id column: the dataset scopes the tenant through offices."
+  },
+  "setup_list_reports.r19.s02.c01": {
+   "notes": "Lookup-fed dropdown captured collapsed: ALL plus the account's notes-macro categories (a category is only a Description; standard list follows the ADA categories plus extras - vendor-doc correction). Options from lookup:note_macro_categories (04 13.3; GET /note-macros/categories over definitions group NOTESMACROS). Filters note_macros.category (free text, seeded as numeric category codes) matched to the definition key; ALL keeps macros without a category. Legacy single-select; a list is the enhancement. Confirm the entries on the live tool."
+  }
+ }
+}

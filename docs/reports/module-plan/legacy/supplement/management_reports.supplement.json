@@ -1,0 +1,208 @@
+{
+  "category": "management_reports",
+  "source_document": "research/legacy_report_outputs_monthly_mgmt_ledger_statements.md",
+  "reports": [
+    {
+      "report_id": "management_reports.r02",
+      "legacy_name": "Uncollected Copay",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "management_reports.r02.s02.c01",
+          "text": "PRINT FORMAT = Excel downloads a spreadsheet instead of opening the PDF report viewer; Excel layouts are flat (one record per row). Cross-cutting statement of the document for reports with a PRINT FORMAT section, recorded once here for this category; the vendor evidence it cites is for other reports. (For Payment Plan Charges, the other report of the category with this section, the document lists the effect only as an inference.)",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`PRINT FORMAT` = `Excel` | Downloads a spreadsheet instead of opening the viewer"
+        },
+        {
+          "about": "meaning",
+          "control_id": "management_reports.r02.s04.c01",
+          "text": "The report lists the patients on the schedule in the date range who have a patient balance (vendor text: every patient on today's schedule with a patient balance due), which implies that Start Date / End Date select by appointment date.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "**Output.** Documented elements: one row per patient on the schedule in the range with a patient balance;"
+        },
+        {
+          "about": "meaning",
+          "control_id": "management_reports.r02.s05.c01",
+          "text": "Patient Balance Greater Than is a threshold on the patient balance due - whether pre-existing or created that day.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "patient on today's schedule who has a patient balance due — pre-existing or created today — with the"
+        }
+      ]
+    },
+    {
+      "report_id": "management_reports.r03",
+      "legacy_name": "Audit Trail",
+      "added_controls": [
+        {
+          "section": "Audit Trail Report (patient Print Reports dialog)",
+          "label": "",
+          "type": "radio_group",
+          "options": [
+            "Account",
+            "Patient"
+          ],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "",
+          "confidence": "confirmed",
+          "evidence_quote": "with radios `Account` / `Patient` and `Start Date` / `End Date` — the vendor's preferred way to audit one",
+          "notes": "Appears only when the report is opened from the patient toolbar Print Reports icon > Audit Trail: a small dialog titled `Audit Trail Report` with these two radios plus Start Date / End Date (the dates are already in the inventory as DATE RANGE). It scopes the audit to the family account or to the single patient. Not present on the Reports > Management Reports criteria panel. Default not documented."
+        }
+      ],
+      "added_options": [
+        {
+          "control_id": "management_reports.r03.s05.c02",
+          "options": [
+            "Appointments"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`Module Type` (default `ALL`) | Module; `Appointments` is documented (used to list deleted appointments: look for `Delete Appointment-Created` in `Description`)",
+          "notes": "Only value of the collapsed list that vendor text documents, besides the default ALL already recorded in the inventory (used to list deleted appointments). The remaining values are not documented - see unresolved."
+        }
+      ],
+      "dynamic_rules": [
+        {
+          "when": "The report is opened from the patient toolbar Print Reports icon > Audit Trail instead of Reports > Management Reports",
+          "effect": "A small dialog `Audit Trail Report` is shown: radios `Account` / `Patient` plus `Start Date` / `End Date` (the vendor-preferred way to audit one patient or one family account).",
+          "controls": [
+            "management_reports.r03.s03.c01",
+            "management_reports.r03.s03.c02"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "**Other entry point.** Patient `Print Reports` icon > `Audit Trail` opens a small dialog `Audit Trail Report`"
+        }
+      ],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "management_reports.r03.s03.c01",
+          "text": "Start Date / End Date are the UPDATED-date range: they filter on when the change was made, not on the original date of the changed record.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "| `Start Date` / `End Date` | Updated-date range | `[S]` |"
+        },
+        {
+          "about": "meaning",
+          "control_id": "management_reports.r03.s05.c01",
+          "text": "Audit Type filters on the kind of audited action (vendor text on what the Audit Trail tracks). The value list of the dropdown is NOT verified, so no option is added - see unresolved.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Audit Type` (default `ALL`) | Kind of action; the tracked actions are Edit, Delete, Close out, Reschedule Appointment, Cut/Copy – Paste Appointment — the exact dropdown values are `[unverified]`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "management_reports.r03.s02.c01",
+          "text": "User restricts the list to the changes made by the selected users; the default ALL is echoed in the report footer as `User : ALL`.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "| `User` (default `ALL`) | Events by the selected users | `[S]` |"
+        },
+        {
+          "about": "meaning",
+          "control_id": "management_reports.r03.s05.c02",
+          "text": "For appointments the Audit Trail records only delete, reschedule and cut / copy-paste - ordinary appointment edits are not recorded (2026 revision of the vendor article). This bounds what Module Type = Appointments can return; deleted appointments are found by `Delete Appointment-Created` in the Description column.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "vendor article says that for appointments only delete, reschedule and cut / copy-paste are recorded (ordinary"
+        },
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "The absence of a PRINT FORMAT section is real (as captured): the report opens in the report viewer, whose header strip offers Export to Excel and Word, so the Excel output exists without a criteria choice.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "**Quirks.** No `PRINT FORMAT` section; export through the viewer (`MagAuditTrail`)."
+        }
+      ]
+    },
+    {
+      "report_id": "management_reports.r04",
+      "legacy_name": "Time Clock Report",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "management_reports.r04.s01.c01",
+          "text": "REPORT FORMAT = Detail: every punch for all users over the date range (meant for auditing gross hours and gross wages).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "| `Detail` | Every punch for all users over the date range; meant for auditing gross hours and gross wages |"
+        },
+        {
+          "about": "meaning",
+          "control_id": "management_reports.r04.s01.c01",
+          "text": "REPORT FORMAT = Summary: one summary per user PER DAY; overtime follows the overtime setting of each user.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "| `Summary` | One summary per user **per day**; overtime follows the overtime setting of each user |"
+        },
+        {
+          "about": "meaning",
+          "control_id": "management_reports.r04.s01.c01",
+          "text": "REPORT FORMAT = Employee Total Only (the vendor text calls it \"Total\"): one line per employee for the date range.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "| `Employee Total Only` (text: \"Total\") | One line per employee for the date range |"
+        },
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "The Management Reports version has no PRINT FORMAT section (as captured); the same report under My Reports - a user's own hours - additionally offers PRINT FORMAT PDF / Excel (vendor screenshot).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "offers `PRINT FORMAT` `PDF` / `Excel` `[S]` `[V35]`."
+        },
+        {
+          "about": "meaning",
+          "control_id": "management_reports.r04.s05.c01",
+          "text": "Vendor text: the time clock is user-specific, not location-specific, and the office of a clock in / out is not tracked or reported. What Group By Office (and the OFFICE/GROUP selection) act on is therefore unverified - see unresolved.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "office of a clock in / out is not tracked or reported `[D]` `[V36]`"
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    {
+      "report_id": "management_reports.r01",
+      "question": "What enables Ortho Patient / Ortho Primary / Ortho Secondary? \"Enabled for Ortho\" comes from our own capture; the meaning of the three checkboxes (patient-portion, primary-insurance, secondary-insurance periodic charges) and of Billing Date is inferred. No vendor source shows the PLAN TYPE = Ortho state of this report."
+    },
+    {
+      "report_id": "management_reports.r02",
+      "question": "The effect of REPORT FORMAT Detail / Summary is inferred for Uncollected Copay. Vendor text says the report covers the patients on the schedule who have a patient balance due, which implies - but does not state - that Start Date / End Date select by appointment date; confirm on the live legacy screen."
+    },
+    {
+      "report_id": "management_reports.r03",
+      "question": "Exact values of the Audit Type dropdown are unverified. Vendor text only lists the tracked actions: Edit, Delete, Close out, Reschedule Appointment, Cut/Copy - Paste Appointment."
+    },
+    {
+      "report_id": "management_reports.r03",
+      "question": "Values of the Module Type dropdown other than ALL and Appointments are not documented, and the legacy order is unknown. Vendor text names the modules the Audit Trail tracks (Appointments, Patient, Setup, Transactions, Treatment Plan) and the sample output shows PATIENT / Patient, Transactions, Treatment Plan and Appointments in its Type column; that these are the dropdown values is presumed, not verified."
+    },
+    {
+      "report_id": "management_reports.r03",
+      "question": "Contents of the User > SELECT dialog and of the Patient SEARCH dialog are not documented. That an empty Patient box means all patients comes from our own capture only."
+    },
+    {
+      "report_id": "management_reports.r03",
+      "question": "Default of the Account / Patient radios in the patient-level `Audit Trail Report` dialog is not documented."
+    },
+    {
+      "report_id": "management_reports.r04",
+      "question": "What enables `Group By Office` and what does it do? The document says disabled for a single office and infers grouping by office when several are selected; the vendor states that the office of a clock in / out is not tracked, yet the option exists."
+    },
+    {
+      "question": "Contents of the OFFICE/GROUP > SELECT dialog (and its Office Group variant) and of the User > SELECT dialog of Time Clock Report are not documented; the research document lists the contents of the SELECT / SEARCH dialogs as a gap."
+    }
+  ]
+}

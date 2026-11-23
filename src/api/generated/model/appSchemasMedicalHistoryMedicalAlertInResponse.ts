@@ -6,10 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type MedicalAlertInResponse = typeof MedicalAlertInResponse[keyof typeof MedicalAlertInResponse] | null;
+export type AppSchemasMedicalHistoryMedicalAlertInResponse = typeof AppSchemasMedicalHistoryMedicalAlertInResponse[keyof typeof AppSchemasMedicalHistoryMedicalAlertInResponse] | null;
 
 
-export const MedicalAlertInResponse = {
+export const AppSchemasMedicalHistoryMedicalAlertInResponse = {
   yes: 'yes',
   no: 'no',
   unknown: 'unknown',
