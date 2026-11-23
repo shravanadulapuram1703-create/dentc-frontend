@@ -143,6 +143,16 @@ class ScanManager:
         self._observer: Observer | None = None
         self._lock = threading.Lock()
         config.ensure_temp_dir()
+        # nImageID's already downloaded, per chart_no - persists across the many
+        # short-lived single-image sessions a multi-capture web-app session opens
+        # in a row. Vatech can register several images at once (e.g. a capture-
+        # several-then-"Save to DB" workflow all lands with the same dtAcqTime),
+        # and a session's own point-in-time "new since I started" snapshot can't
+        # tell those apart from images another sibling session already claimed -
+        # tracking real completions here instead is what makes each new session
+        # correctly pick the next undownloaded one rather than silently treating
+        # an already-arrived-but-not-yet-downloaded sibling as old news.
+        self._downloaded_ids: dict[str, set[int]] = {}
 
     def start_scan(
         self,
@@ -305,12 +315,19 @@ class ScanManager:
             self._emit(session)
             return
 
-        # Snapshot existing image IDs so a pre-existing capture never gets
-        # mistaken for a new one — nImageID is stable identity, not filename.
-        try:
-            seen_ids = {img.get("nImageID") for img in vatech_rest.list_images_for_chart(base_url, token, chart_no)}
-        except vatech_rest.VatechRestError:
-            seen_ids = set()  # best-effort baseline; worst case one stale hit
+        # Seed this chart's downloaded-set ONCE, the first time it's ever polled
+        # by this running agent, so pre-existing captures never get mistaken for
+        # new ones — nImageID is stable identity, not filename. A later session
+        # for the same chart reuses the existing set rather than re-snapshotting
+        # (that would treat an already-arrived-but-not-yet-downloaded sibling
+        # from a multi-image batch as old news and lose it permanently).
+        with self._lock:
+            if chart_no not in self._downloaded_ids:
+                try:
+                    existing = vatech_rest.list_images_for_chart(base_url, token, chart_no)
+                    self._downloaded_ids[chart_no] = {img.get("nImageID") for img in existing}
+                except vatech_rest.VatechRestError:
+                    self._downloaded_ids[chart_no] = set()  # best-effort baseline; worst case one stale hit
 
         deadline = time.time() + _REST_POLL_TIMEOUT_S
         while time.time() < deadline:
@@ -324,12 +341,18 @@ class ScanManager:
             except vatech_rest.VatechRestError:
                 continue  # transient — keep polling until the deadline
 
-            new_images = [img for img in images if img.get("nImageID") not in seen_ids]
+            with self._lock:
+                downloaded = self._downloaded_ids.setdefault(chart_no, set())
+                new_images = [img for img in images if img.get("nImageID") not in downloaded]
             if not new_images:
                 continue
 
-            new_images.sort(key=lambda img: img.get("nImageID") or 0, reverse=True)
+            # Oldest first, so a multi-image batch (several captures registered
+            # together, e.g. after one "Save to DB") comes in across successive
+            # sessions in the order they were actually taken.
+            new_images.sort(key=lambda img: img.get("nImageID") or 0)
             target = new_images[0]
+            target_id = target.get("nImageID")
             fname = target.get("strImgFileName") or ""
 
             try:
@@ -354,6 +377,9 @@ class ScanManager:
                     session.image_file = dest
                     session.content_type = _CONTENT_TYPES.get(ext, "application/octet-stream")
                     session.status = "completed"
+                    # Mark claimed only on confirmed success - a failed write
+                    # must stay eligible for the next session to retry it.
+                    self._downloaded_ids.setdefault(chart_no, set()).add(target_id)
                 except OSError as exc:
                     session.status = "failed"
                     session.error = f"Failed to save downloaded capture: {exc}"

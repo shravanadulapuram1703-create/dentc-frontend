@@ -94,7 +94,6 @@ export default function ImagingWorkspace() {
             patientName={patient.name}
             patientDob={patient.dob}
             officeId={officeId}
-            onCaptured={() => setTab('images')}
           />
         ) : (
           <ImagesTab patientId={numericPatientId} officeId={officeId ?? undefined} />

@@ -9,9 +9,9 @@ import {
 } from 'lucide-react';
 import type { DicomImage, DicomImagingFilters } from '../types';
 import { useGetPatientImaging } from '../hooks/useDicomImaging';
-import { flattenImaging, formatStudyDate, MODALITY_LABELS } from '../utils/dicomAssets';
+import { flattenImaging, formatStudyDate, groupImagesByDate, MODALITY_LABELS } from '../utils/dicomAssets';
 import DicomFilters from './DicomFilters';
-import DicomStudyCard from './DicomStudyCard';
+import DicomDateCard from './DicomDateCard';
 import DicomViewer from './DicomViewer';
 
 interface DicomStudySectionProps {
@@ -34,6 +34,7 @@ export default function DicomStudySection({ patientId }: DicomStudySectionProps)
 
   const studies = useMemo(() => data?.studies ?? [], [data]);
   const images = useMemo<DicomImage[]>(() => flattenImaging(data), [data]);
+  const dateGroups = useMemo(() => groupImagesByDate(images), [images]);
 
   // Stable modality dropdown: the contract's fixed set, unioned with anything the
   // current response surfaces (server-side filtering can otherwise shrink it).
@@ -45,36 +46,36 @@ export default function DicomStudySection({ patientId }: DicomStudySectionProps)
 
   const openImage = (image: DicomImage) => setViewerUid(image.instance.sop_instance_uid);
 
-  // Which study sections are expanded. Held here (not per-card) so Expand All /
+  // Which date sections are expanded. Held here (not per-card) so Expand All /
   // Collapse All can drive every section at once while each header still toggles
   // on its own.
-  const [openUids, setOpenUids] = useState<Set<string>>(() => new Set());
-  const studyKey = useMemo(
-    () => studies.map((s) => s.study_instance_uid).join('|'),
-    [studies],
+  const [openDates, setOpenDates] = useState<Set<string>>(() => new Set());
+  const dateGroupKey = useMemo(
+    () => dateGroups.map((g) => g.dateKey).join('|'),
+    [dateGroups],
   );
 
-  // Reset to the default (newest study expanded) whenever the study set changes,
-  // e.g. after a filter change. Derived from studyKey alone so a plain refetch of
-  // the same studies doesn't collapse what the user opened.
+  // Reset to the default (newest date expanded) whenever the date set changes,
+  // e.g. after a filter change. Derived from dateGroupKey alone so a plain
+  // refetch of the same data doesn't collapse what the user opened.
   useEffect(() => {
-    const first = studyKey ? studyKey.split('|')[0] : null;
-    setOpenUids(new Set(first ? [first] : []));
-  }, [studyKey]);
+    const first = dateGroupKey ? dateGroupKey.split('|')[0] : null;
+    setOpenDates(new Set(first ? [first] : []));
+  }, [dateGroupKey]);
 
-  const toggleStudy = useCallback((uid: string) => {
-    setOpenUids((prev) => {
+  const toggleDate = useCallback((dateKey: string) => {
+    setOpenDates((prev) => {
       const next = new Set(prev);
-      if (!next.delete(uid)) next.add(uid);
+      if (!next.delete(dateKey)) next.add(dateKey);
       return next;
     });
   }, []);
 
-  const expandAll = () => setOpenUids(new Set(studies.map((s) => s.study_instance_uid)));
-  const collapseAll = () => setOpenUids(new Set());
+  const expandAll = () => setOpenDates(new Set(dateGroups.map((g) => g.dateKey)));
+  const collapseAll = () => setOpenDates(new Set());
 
-  const openCount = studies.filter((s) => openUids.has(s.study_instance_uid)).length;
-  const allExpanded = studies.length > 0 && openCount === studies.length;
+  const openCount = dateGroups.filter((g) => openDates.has(g.dateKey)).length;
+  const allExpanded = dateGroups.length > 0 && openCount === dateGroups.length;
   const allCollapsed = openCount === 0;
 
   const hasActiveFilters =
@@ -157,7 +158,7 @@ export default function DicomStudySection({ patientId }: DicomStudySectionProps)
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <p className="text-xs text-[#64748B]">
-              {openCount} of {studies.length} {studies.length === 1 ? 'section' : 'sections'} expanded
+              {openCount} of {dateGroups.length} {dateGroups.length === 1 ? 'day' : 'days'} expanded
             </p>
             <div className="flex items-center gap-2">
               <button
@@ -183,12 +184,17 @@ export default function DicomStudySection({ patientId }: DicomStudySectionProps)
             </div>
           </div>
 
-          {studies.map((study) => (
-            <DicomStudyCard
-              key={study.study_instance_uid}
-              study={study}
-              open={openUids.has(study.study_instance_uid)}
-              onToggle={toggleStudy}
+          {dateGroups.map((group) => (
+            <DicomDateCard
+              key={group.dateKey}
+              dateKey={group.dateKey}
+              images={group.images}
+              modalities={group.modalities}
+              identityReviewRequired={group.identityReviewRequired}
+              hasReidentifiedImages={group.hasReidentifiedImages}
+              latestTime={group.latestTime}
+              open={openDates.has(group.dateKey)}
+              onToggle={toggleDate}
               onOpen={openImage}
             />
           ))}

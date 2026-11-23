@@ -14,7 +14,9 @@ import type {
   PatientDocumentRead,
   ImageGroupRead,
   ImageDetailRead,
+  DicomInstanceOut,
 } from '@/api/generated/model';
+import { customInstance } from '@/api/mutator/axiosInstance';
 import {
   IMAGING_GROUP_NAME,
   IMAGING_GROUP_TYPE,
@@ -52,6 +54,61 @@ export const uploadImage = ({
     office_id: office_id ?? null,
     document_type: category ?? null,
     description: description ?? null,
+  });
+
+export interface UploadCaptureInput {
+  file: File;
+  patient_id: number;
+  modality?: string | null;
+  description?: string | null;
+}
+
+/**
+ * Upload a freshly captured image/DICOM file to the patient's DICOM archive
+ * ("Scanned Imaging" — DicomStudy/Series/Instance), not the patient-documents
+ * store `uploadImage` above writes to. Hand-written against the real route
+ * (`POST /{patient_id}/imaging/captures`, operation_id
+ * create_patient_imaging_capture) rather than going through Orval: that route
+ * already exists on the backend, but the checked-in generated client hasn't
+ * been synced against the current schema for it, and a full `npm run api:sync`
+ * right now touches 700+ unrelated files across the app (separate, pre-existing
+ * drift). Mirrors uploadPatientDocument's own generated shape exactly — same
+ * customInstance call, same multipart building — so it's a drop-in replacement
+ * once a real client sync happens.
+ */
+export const uploadCapture = ({
+  file,
+  patient_id,
+  modality,
+  description,
+}: UploadCaptureInput): Promise<DicomInstanceOut> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  if (modality != null) formData.append('modality', modality);
+  if (description != null) formData.append('description', description);
+
+  return customInstance<DicomInstanceOut>({
+    url: `/api/v1/patients/${patient_id}/imaging/captures`,
+    method: 'POST',
+    headers: { 'Content-Type': 'multipart/form-data' },
+    data: formData,
+  });
+};
+
+/**
+ * Tag (or clear) the teeth associated with one scanned/captured DICOM
+ * instance. Same hand-written-against-the-real-route situation as
+ * `uploadCapture` above — `PATCH /dicom-instances/{sop}/tooth-numbers` is a
+ * new backend endpoint not yet in the generated client.
+ */
+export const updateDicomInstanceToothNumbers = (
+  sopInstanceUid: string,
+  toothNumbers: number[],
+): Promise<DicomInstanceOut> =>
+  customInstance<DicomInstanceOut>({
+    url: `/api/v1/dicom-instances/${sopInstanceUid}/tooth-numbers`,
+    method: 'PATCH',
+    data: { tooth_numbers: toothNumbers },
   });
 
 /**
